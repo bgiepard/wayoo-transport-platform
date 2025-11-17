@@ -3,10 +3,23 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
-import { users } from '@/lib/data';
+import { users, transportRequests, offers } from '@/lib/data';
 
 export default function Navigation() {
   const { currentUser, setCurrentUser, isPassenger, isCarrier } = useAuth();
+
+  // Count new offers for passenger
+  const getNewOffersCount = () => {
+    if (!currentUser || currentUser.role !== 'passenger') return 0;
+    const myRequests = transportRequests.filter((r) => r.userId === currentUser.id);
+    const newOffersCount = myRequests.reduce((count, request) => {
+      const requestOffers = offers.filter((o) => o.requestId === request.id && o.status === 'pending');
+      return count + requestOffers.length;
+    }, 0);
+    return newOffersCount;
+  };
+
+  const newOffersCount = getNewOffersCount();
 
   return (
     <nav className="bg-[#081c83] shadow-lg">
@@ -31,9 +44,14 @@ export default function Navigation() {
             {isPassenger && (
               <Link
                 href="/passenger/requests"
-                className="text-white hover:text-[#ffc428] font-medium transition-colors"
+                className="text-white hover:text-[#ffc428] font-medium transition-colors relative inline-flex items-center gap-2"
               >
                 Moje Zapytania
+                {newOffersCount > 0 && (
+                  <span className="absolute -top-2 -right-6 bg-[#ffc428] text-[#215387] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {newOffersCount}
+                  </span>
+                )}
               </Link>
             )}
 

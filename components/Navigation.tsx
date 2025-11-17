@@ -44,7 +44,7 @@ export default function Navigation() {
             {isPassenger && (
               <Link
                 href="/passenger/requests"
-                className="text-white hover:text-[#ffc428] font-medium transition-colors relative inline-flex items-center gap-2"
+                className="text-white hover:text-[#ffc428] font-medium transition-colors relative inline-flex items-center gap-2 mr-9"
               >
                 Moje Zapytania
                 {newOffersCount > 0 && (

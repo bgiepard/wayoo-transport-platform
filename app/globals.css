@@ -26,3 +26,59 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Outfit', sans-serif;
 }
+
+/* Custom styles for react-date-range */
+.rdrDateRangePickerWrapper {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.rdrCalendarWrapper {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.rdrMonth {
+  padding: 0;
+}
+
+.rdrMonthAndYearWrapper {
+  padding-top: 10px;
+}
+
+.rdrDay:not(.rdrDayPassive) .rdrInRange ~ .rdrDayNumber span,
+.rdrDay:not(.rdrDayPassive) .rdrStartEdge ~ .rdrDayNumber span,
+.rdrDay:not(.rdrDayPassive) .rdrEndEdge ~ .rdrDayNumber span,
+.rdrDay:not(.rdrDayPassive) .rdrSelected ~ .rdrDayNumber span {
+  color: #215387;
+}
+
+.rdrDayToday .rdrDayNumber span:after {
+  background: #ffc428;
+}
+
+.rdrDateDisplayWrapper {
+  background-color: transparent;
+}
+
+.rdrMonthPicker select,
+.rdrYearPicker select {
+  font-weight: 600;
+  color: #215387;
+}
+
+.rdrNextPrevButton {
+  background: #f7f7f7;
+}
+
+.rdrNextPrevButton:hover {
+  background: #ffc428;
+}
+
+.rdrDayNumber span {
+  color: #1A202C;
+}
+
+.rdrDayPassive .rdrDayNumber span {
+  color: #d1d5db;
+}

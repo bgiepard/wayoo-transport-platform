@@ -20,7 +20,9 @@
       "Bash(git push:*)",
       "Bash(git init:*)",
       "Bash(git pull:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "WebFetch(domain:wakacje.pl)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

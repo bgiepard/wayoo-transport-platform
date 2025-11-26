@@ -7,6 +7,10 @@ import { DateRangePicker } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { pl } from 'date-fns/locale';
+import { LoadScript } from '@react-google-maps/api';
+import PlaceAutocomplete from '@/components/PlaceAutocomplete';
+
+const libraries: ("places")[] = ["places"];
 
 export default function Home() {
   const { isPassenger, isCarrier } = useAuth();
@@ -113,9 +117,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with Background */}
-      <div
+    <LoadScript
+      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+      libraries={libraries}
+    >
+      <div className="min-h-screen">
+        {/* Hero Section with Background */}
+        <div
         className="relative min-h-[700px] pb-[120px] bg-cover bg-center bg-no-repeat"
         style={{
           backgroundImage: 'url(/wayoo-background.jpg)',
@@ -150,43 +158,33 @@ export default function Home() {
                 <div className="flex flex-col lg:flex-row gap-3 mb-4">
                   {/* Skąd jedziemy */}
                   <div className="flex-1 min-w-[200px]">
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428]">
+                    <PlaceAutocomplete
+                      value={formData.fromCity}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
+                      placeholder="Skąd?"
+                      name="fromCity"
+                      icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                      </div>
-                      <input
-                        type="text"
-                        name="fromCity"
-                        value={formData.fromCity}
-                        onChange={handleChange}
-                        placeholder="Skąd?"
-                        required
-                        className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-                      />
-                    </div>
+                      }
+                    />
                   </div>
 
                   {/* Dokąd jedziemy */}
                   <div className="flex-1 min-w-[200px]">
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428]">
+                    <PlaceAutocomplete
+                      value={formData.toCity}
+                      onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
+                      placeholder="Dokąd?"
+                      name="toCity"
+                      icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
-                      </div>
-                      <input
-                        type="text"
-                        name="toCity"
-                        value={formData.toCity}
-                        onChange={handleChange}
-                        placeholder="Dokąd?"
-                        required
-                        className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-                      />
-                    </div>
+                      }
+                    />
                   </div>
 
                   {/* Date Range Picker */}
@@ -217,6 +215,8 @@ export default function Home() {
                           direction="horizontal"
                           rangeColors={['#ffc428']}
                           showDateDisplay={false}
+                          staticRanges={[]}
+                          inputRanges={[]}
                         />
                       </div>
                     )}
@@ -311,6 +311,214 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Reviews Section - Carriers */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 pb-0">
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Review 1 - Fast Transport */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#ffc428] to-[#f5b920] rounded-full flex items-center justify-center text-2xl">
+                🚐
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Fast Transport</h4>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              "Fantastyczna obsługa! Kierowca profesjonalny, autobus czysty i punktualność na najwyższym poziomie. Polecamy dla wyjazdów firmowych."
+            </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="font-semibold">Anna Kowalska</span>
+              <span>•</span>
+              <span>Wycieczka do Krakowa</span>
+            </div>
+          </div>
+
+          {/* Review 2 - BusLine Premium */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#215387] to-[#1a4469] rounded-full flex items-center justify-center text-2xl">
+                🚌
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">BusLine Premium</h4>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              "Najlepszy przewoźnik z jakim mieliśmy przyjemność współpracować. WiFi w autobusie, wygodne fotele i miła atmosfera. Dziękujemy!"
+            </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="font-semibold">Piotr Nowak</span>
+              <span>•</span>
+              <span>Wyjazd integracyjny</span>
+            </div>
+          </div>
+
+          {/* Review 3 - EcoTransport */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-2xl">
+                🌱
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">EcoTransport</h4>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              "Elektryczne busy to przyszłość! Cicha jazda, ekologiczny transport i świetna cena. Zdecydowanie wybierzemy Was ponownie."
+            </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="font-semibold">Katarzyna Wiśniewska</span>
+              <span>•</span>
+              <span>Transfer lotniskowy</span>
+            </div>
+          </div>
+
+          {/* Review 4 - Express Travel */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-2xl">
+                ⚡
+              </div>
+              <div>
+                <h4 className="font-bold text-gray-900">Express Travel</h4>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                    </svg>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed mb-4">
+              "Szybko, sprawnie i bezpiecznie. Idealne rozwiązanie dla grup wyjazdowych. Kierowca pomocny i zawsze na czas. 5 gwiazdek!"
+            </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span className="font-semibold">Marek Zieliński</span>
+              <span>•</span>
+              <span>Wyjazd do Zakopanego</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inspirations Section - Polish Hotels */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Popularne Kierunki</h2>
+          <p className="text-xl text-gray-600">Odkryj najczęściej wybierane destynacje grupowe</p>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-6">
+          {/* Hotel 1 - Zakopane */}
+          <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+            <div className="aspect-[4/5] relative">
+              <img
+                src="https://images.unsplash.com/photo-1605346434674-a440ca4dc4c0?w=400&h=500&fit=crop"
+                alt="Zakopane"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <h3 className="text-2xl font-bold mb-2">Zakopane</h3>
+                <p className="text-sm text-white/90 mb-3">Tatry • Narty • Góry</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                    Od 150 PLN/os
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hotel 2 - Sopot */}
+          <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+            <div className="aspect-[4/5] relative">
+              <img
+                src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=500&fit=crop"
+                alt="Sopot"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <h3 className="text-2xl font-bold mb-2">Sopot</h3>
+                <p className="text-sm text-white/90 mb-3">Morze • Plaża • Molo</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                    Od 180 PLN/os
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hotel 3 - Kraków */}
+          <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+            <div className="aspect-[4/5] relative">
+              <img
+                src="https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=400&h=500&fit=crop"
+                alt="Kraków"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <h3 className="text-2xl font-bold mb-2">Kraków</h3>
+                <p className="text-sm text-white/90 mb-3">Historia • Kultura • Rynek</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                    Od 120 PLN/os
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Hotel 4 - Warszawa */}
+          <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+            <div className="aspect-[4/5] relative">
+              <img
+                src="https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400&h=500&fit=crop"
+                alt="Warszawa"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                <h3 className="text-2xl font-bold mb-2">Warszawa</h3>
+                <p className="text-sm text-white/90 mb-3">Stolica • Biznes • Imprezy</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                    Od 140 PLN/os
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Features Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
@@ -356,6 +564,99 @@ export default function Home() {
           </div>
         </div>
 
+        <div className="mt-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Popularne Kierunki</h2>
+            <p className="text-xl text-gray-600">Odkryj najczęściej wybierane destynacje grupowe</p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {/* Hotel 1 - Zakopane */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+              <div className="aspect-[4/5] relative">
+                <img
+                  src="https://images.unsplash.com/photo-1605346434674-a440ca4dc4c0?w=400&h=500&fit=crop"
+                  alt="Zakopane"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Zakopane</h3>
+                  <p className="text-sm text-white/90 mb-3">Tatry • Narty • Góry</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                      Od 150 PLN/os
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hotel 2 - Sopot */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+              <div className="aspect-[4/5] relative">
+                <img
+                  src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400&h=500&fit=crop"
+                  alt="Sopot"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Sopot</h3>
+                  <p className="text-sm text-white/90 mb-3">Morze • Plaża • Molo</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                      Od 180 PLN/os
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hotel 3 - Kraków */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+              <div className="aspect-[4/5] relative">
+                <img
+                  src="https://images.unsplash.com/photo-1585409677983-0f6c41ca9c3b?w=400&h=500&fit=crop"
+                  alt="Kraków"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Kraków</h3>
+                  <p className="text-sm text-white/90 mb-3">Historia • Kultura • Rynek</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                      Od 120 PLN/os
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hotel 4 - Warszawa */}
+            <div className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all cursor-pointer">
+              <div className="aspect-[4/5] relative">
+                <img
+                  src="https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400&h=500&fit=crop"
+                  alt="Warszawa"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Warszawa</h3>
+                  <p className="text-sm text-white/90 mb-3">Stolica • Biznes • Imprezy</p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="px-3 py-1 bg-[#ffc428] text-[#215387] rounded-full font-bold">
+                      Od 140 PLN/os
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="mt-24 bg-gradient-to-r from-[#215387] to-[#1a4469] rounded-2xl shadow-2xl p-12">
           <h3 className="text-3xl font-bold text-white text-center mb-12">wayoo w liczbach</h3>
@@ -378,7 +679,136 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Reviews Section - Carriers */}
+        <div className="mt-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Opinie Klientów</h2>
+            <p className="text-xl text-gray-600">Zobacz co mówią o nas pasażerowie</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Review 1 - Fast Transport */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#ffc428] to-[#f5b920] rounded-full flex items-center justify-center text-2xl">
+                  🚐
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">Fast Transport</h4>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                "Fantastyczna obsługa! Kierowca profesjonalny, autobus czysty i punktualność na najwyższym poziomie. Polecamy dla wyjazdów firmowych."
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="font-semibold">Anna Kowalska</span>
+                <span>•</span>
+                <span>Wycieczka do Krakowa</span>
+              </div>
+            </div>
+
+            {/* Review 2 - BusLine Premium */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-[#215387] to-[#1a4469] rounded-full flex items-center justify-center text-2xl">
+                  🚌
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">BusLine Premium</h4>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                "Najlepszy przewoźnik z jakim mieliśmy przyjemność współpracować. WiFi w autobusie, wygodne fotele i miła atmosfera. Dziękujemy!"
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="font-semibold">Piotr Nowak</span>
+                <span>•</span>
+                <span>Wyjazd integracyjny</span>
+              </div>
+            </div>
+
+            {/* Review 3 - EcoTransport */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-2xl">
+                  🌱
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">EcoTransport</h4>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                "Elektryczne busy to przyszłość! Cicha jazda, ekologiczny transport i świetna cena. Zdecydowanie wybierzemy Was ponownie."
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="font-semibold">Katarzyna Wiśniewska</span>
+                <span>•</span>
+                <span>Transfer lotniskowy</span>
+              </div>
+            </div>
+
+            {/* Review 4 - Express Travel */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-2xl">
+                  ⚡
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900">Express Travel</h4>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                "Szybko, sprawnie i bezpiecznie. Idealne rozwiązanie dla grup wyjazdowych. Kierowca pomocny i zawsze na czas. 5 gwiazdek!"
+              </p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <span className="font-semibold">Marek Zieliński</span>
+                <span>•</span>
+                <span>Wyjazd do Zakopanego</span>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <div className="text-center mt-12">
+            <Link
+              href="/carrier/requests"
+              className="inline-block bg-[#ffc428] text-[#215387] px-8 py-4 rounded-xl hover:bg-[#f5b920] transition-all font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105"
+            >
+              Zobacz dostępne zapytania
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
+    </LoadScript>
   );
 }

@@ -18,7 +18,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     fromCity: '',
     toCity: '',
-    passengerCount: '',
+    passengerCount: '1',
     departureDate: defaultDate,
     departureTime: '12:00',
     // Dodatkowe opcje
@@ -118,7 +118,7 @@ export default function Home() {
                   <div className="space-y-4">
                     {/* Skąd */}
                     <div>
-                      <label className="block text-sm font-semibold text-[#215387] mb-2">Skąd</label>
+                      <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Skąd</label>
                       <PlaceAutocomplete
                         value={formData.fromCity}
                         onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
@@ -135,7 +135,7 @@ export default function Home() {
 
                     {/* Dokąd */}
                     <div>
-                      <label className="block text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
+                      <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
                       <PlaceAutocomplete
                         value={formData.toCity}
                         onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
@@ -154,7 +154,7 @@ export default function Home() {
                   <div className="space-y-4">
                     {/* Data i godzina */}
                     <div>
-                      <label className="block text-sm font-semibold text-[#215387] mb-2">Data i godzina odjazdu</label>
+                      <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Data i godzina odjazdu</label>
                       <div className="relative">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428] z-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,41 +178,54 @@ export default function Home() {
 
                     {/* Liczba pasażerów */}
                     <div>
-                      <label className="block text-sm font-semibold text-[#215387] mb-2">Liczba pasażerów</label>
-                      <div className="relative">
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428]">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                        </div>
+                      <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Liczba pasażerów</label>
+                      <div className="flex items-stretch gap-2">
+                        {/* Przycisk minus */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentCount = parseInt(formData.passengerCount) || 1;
+                            if (currentCount > 1) {
+                              setFormData((prev) => ({ ...prev, passengerCount: (currentCount - 1).toString() }));
+                            }
+                          }}
+                          className="w-12 flex items-center justify-center bg-gray-50 border-2 border-gray-300 text-[#215387] rounded-xl hover:bg-gray-100 transition-all font-bold text-xl leading-none"
+                          style={{ padding: '14px 0' }}
+                        >
+                          −
+                        </button>
+
+                        {/* Input */}
                         <input
                           type="number"
                           name="passengerCount"
                           value={formData.passengerCount}
                           onChange={handleChange}
-                          placeholder="Liczba osób"
                           min="1"
                           required
-                          className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                          className="flex-1 px-4 text-center text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all font-semibold leading-none"
+                          style={{ padding: '14px 16px' }}
                         />
+
+                        {/* Przycisk plus */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const currentCount = parseInt(formData.passengerCount) || 0;
+                            setFormData((prev) => ({ ...prev, passengerCount: (currentCount + 1).toString() }));
+                          }}
+                          className="w-12 flex items-center justify-center bg-gray-50 border-2 border-gray-300 text-[#215387] rounded-xl hover:bg-gray-100 transition-all font-bold text-xl leading-none"
+                          style={{ padding: '14px 0' }}
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Przycisk Submit - Pełna szerokość */}
-                <button
-                  type="submit"
-                  className="w-full px-8 py-4 text-lg bg-[#ffc428] text-[#215387] rounded-xl hover:bg-[#f5b920] transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Szukaj transportu
-                </button>
-
                 {/* Więcej opcji */}
-                <div className="text-center">
+                <div className="text-center mb-4">
                   <button
                     type="button"
                     onClick={() => setShowMoreOptions(!showMoreOptions)}
@@ -224,7 +237,7 @@ export default function Home() {
 
                 {/* Dodatkowe opcje */}
                 {showMoreOptions && (
-                  <div className="grid md:grid-cols-2 gap-4 mt-6 pt-6 border-t">
+                  <div className="grid md:grid-cols-2 gap-4 mb-6 pb-6 border-b">
                     <div className="md:col-span-2">
                       <textarea
                         name="luggageInfo"
@@ -259,6 +272,17 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* Przycisk Submit - Pełna szerokość */}
+                <button
+                  type="submit"
+                  className="w-full px-8 py-4 text-lg bg-[#ffc428] text-[#215387] rounded-xl hover:bg-[#f5b920] transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Szukaj transportu
+                </button>
               </form>
             </div>
           </div>

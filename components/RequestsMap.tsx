@@ -59,7 +59,7 @@ interface RequestsMapProps {
 
 export default function RequestsMap({ requests, selectedRequestId }: RequestsMapProps) {
   const [mounted, setMounted] = useState(false);
-  const apiKey = process.env.NEXT_PUBLIC_GEOAPIFY_KEY;
+  const apiKey = '11da404667ca45a78db6a73c3b6be0d9';
 
   useEffect(() => {
     setMounted(true);

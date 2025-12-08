@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
-import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface PlaceAutocompleteProps {
   value: string;
@@ -9,6 +8,16 @@ interface PlaceAutocompleteProps {
   icon: React.ReactNode;
 }
 
+interface MapboxFeature {
+  id: string;
+  place_name: string;
+  text: string;
+  place_type: string[];
+  context?: Array<{ id: string; text: string }>;
+}
+
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiYmdpZXBhcmQiLCJhIjoiY2p1eDNhMHdnMGY0YzRlbWwyd3J2NXRmcCJ9.kjB17ZZEQMzaABOCR6d-Gw';
+
 export default function PlaceAutocomplete({
   value,
   onChange,
@@ -16,21 +25,11 @@ export default function PlaceAutocomplete({
   name,
   icon,
 }: PlaceAutocompleteProps) {
-  const {
-    ready,
-    value: autocompleteValue,
-    suggestions: { status, data },
-    setValue,
-    clearSuggestions,
-  } = usePlacesAutocomplete({
-    requestOptions: {
-      componentRestrictions: { country: 'pl' },
-    },
-    debounce: 300,
-  });
-
+  const [suggestions, setSuggestions] = useState<MapboxFeature[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -44,17 +43,55 @@ export default function PlaceAutocomplete({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        access_token: MAPBOX_TOKEN,
+        country: 'PL',
+        language: 'pl',
+        limit: '5',
+        types: 'place,locality,address',
+      });
+
+      const endpoint = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?${params.toString()}`;
+      const response = await fetch(endpoint);
+      const data = await response.json();
+
+      if (data.features) {
+        setSuggestions(data.features);
+      }
+    } catch (error) {
+      console.error('Error fetching suggestions:', error);
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     onChange(inputValue);
-    setValue(inputValue);
     setShowDropdown(true);
+
+    // Debounce API calls
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      fetchSuggestions(inputValue);
+    }, 300);
   };
 
-  const handleSelect = (description: string) => {
-    onChange(description);
-    setValue(description, false);
-    clearSuggestions();
+  const handleSelect = (placeName: string) => {
+    onChange(placeName);
+    setSuggestions([]);
     setShowDropdown(false);
   };
 
@@ -72,24 +109,24 @@ export default function PlaceAutocomplete({
           onFocus={() => setShowDropdown(true)}
           placeholder={placeholder}
           required
-          disabled={!ready}
           className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
         />
       </div>
 
-      {showDropdown && status === 'OK' && (
+      {showDropdown && suggestions.length > 0 && (
         <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border-2 border-gray-200 max-h-[300px] overflow-y-auto">
-          {data.map((suggestion) => {
-            const {
-              place_id,
-              structured_formatting: { main_text, secondary_text },
-            } = suggestion;
+          {suggestions.map((suggestion) => {
+            // Extract main text and context (region, country)
+            const mainText = suggestion.text;
+            const contextText = suggestion.context
+              ?.map(c => c.text)
+              .join(', ') || '';
 
             return (
               <button
-                key={place_id}
+                key={suggestion.id}
                 type="button"
-                onClick={() => handleSelect(suggestion.description)}
+                onClick={() => handleSelect(suggestion.place_name)}
                 className="w-full text-left px-4 py-3 hover:bg-[#ffc428]/10 transition-colors border-b border-gray-100 last:border-b-0 first:rounded-t-xl last:rounded-b-xl"
               >
                 <div className="flex items-start gap-3">
@@ -111,16 +148,24 @@ export default function PlaceAutocomplete({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[#215387] truncate">
-                      {main_text}
+                      {mainText}
                     </div>
-                    <div className="text-sm text-gray-500 truncate">
-                      {secondary_text}
-                    </div>
+                    {contextText && (
+                      <div className="text-sm text-gray-500 truncate">
+                        {contextText}
+                      </div>
+                    )}
                   </div>
                 </div>
               </button>
             );
           })}
+        </div>
+      )}
+
+      {showDropdown && isLoading && (
+        <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border-2 border-gray-200 px-4 py-3 text-center text-gray-500">
+          Wyszukiwanie...
         </div>
       )}
     </div>

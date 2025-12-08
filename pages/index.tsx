@@ -3,58 +3,35 @@ import Image from 'next/image';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/lib/auth-context';
-import { DateRangePicker } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
-import { pl } from 'date-fns/locale';
-import { LoadScript } from '@react-google-maps/api';
 import PlaceAutocomplete from '@/components/PlaceAutocomplete';
-
-const libraries: ("places")[] = ["places"];
 
 export default function Home() {
   const { isPassenger, isCarrier } = useAuth();
   const router = useRouter();
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const datePickerRef = useRef<HTMLDivElement>(null);
 
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: new Date(),
-      key: 'selection'
-    }
-  ]);
+  // Ustaw domyślną datę na jutro i godzinę na 12:00
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const defaultDate = tomorrow.toISOString().split('T')[0];
 
   const [formData, setFormData] = useState({
     fromCity: '',
     toCity: '',
     passengerCount: '',
+    departureDate: defaultDate,
+    departureTime: '12:00',
     // Dodatkowe opcje
     luggageInfo: '',
     specialRequirements: '',
     budgetMax: '',
   });
 
-  // Zamknij dropdown gdy klikniemy poza nim
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
-        setShowDatePicker(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const startDate = dateRange[0].startDate;
-    const endDate = dateRange[0].endDate;
-    const isRoundTrip = startDate.toDateString() !== endDate.toDateString();
+    // Połącz datę i godzinę w jeden obiekt Date
+    const departureDateTime = new Date(`${formData.departureDate}T${formData.departureTime}`);
 
     // Zapisz zapytanie do localStorage
     const newRequest = {
@@ -69,9 +46,8 @@ export default function Home() {
         city: formData.toCity,
         address: formData.toCity,
       },
-      departureDate: startDate.toISOString(),
-      returnDate: isRoundTrip ? endDate.toISOString() : undefined,
-      isRoundTrip: isRoundTrip,
+      departureDate: departureDateTime.toISOString(),
+      isRoundTrip: false,
       passengerCount: parseInt(formData.passengerCount),
       luggageInfo: formData.luggageInfo || undefined,
       specialRequirements: formData.specialRequirements || undefined,
@@ -102,26 +78,8 @@ export default function Home() {
     }));
   };
 
-  const formatDateRange = () => {
-    const start = dateRange[0].startDate;
-    const end = dateRange[0].endDate;
-
-    const formatDate = (date: Date) => {
-      return date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    };
-
-    if (start.toDateString() === end.toDateString()) {
-      return formatDate(start);
-    }
-    return `${formatDate(start)} - ${formatDate(end)}`;
-  };
-
   return (
-    <LoadScript
-      googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
-      libraries={libraries}
-    >
-      <div className="min-h-screen">
+    <div className="min-h-screen">
         {/* Hero Section with Background */}
         <div
         className="relative min-h-[700px] pb-[120px] bg-cover bg-center bg-no-repeat"
@@ -136,14 +94,14 @@ export default function Home() {
           <div className="text-center space-y-8">
             <div className="space-y-4">
               <div className="flex justify-center mb-6">
-                <Image
-                  src="/wayoo-logo.png"
-                  alt="wayoo"
-                  width={267}
-                  height={90}
-                  className="h-20 w-auto drop-shadow-2xl"
-                  priority
-                />
+                {/*<Image*/}
+                {/*  src="/wayoo-logo.png"*/}
+                {/*  alt="wayoo"*/}
+                {/*  width={267}*/}
+                {/*  height={90}*/}
+                {/*  className="h-20 w-auto drop-shadow-2xl"*/}
+                {/*  priority*/}
+                {/*/>*/}
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">
                 Twój transport grupowy<br />
@@ -151,111 +109,107 @@ export default function Home() {
               </h1>
             </div>
 
-            {/* Search Form */}
-            <div className="max-w-7xl mx-auto mt-12">
-              <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-6">
-                {/* Główna linia wyszukiwania - 5 elementów */}
-                <div className="flex flex-col lg:flex-row gap-3 mb-4">
-                  {/* Skąd jedziemy */}
-                  <div className="flex-1 min-w-[200px]">
-                    <PlaceAutocomplete
-                      value={formData.fromCity}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
-                      placeholder="Skąd?"
-                      name="fromCity"
-                      icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      }
-                    />
-                  </div>
-
-                  {/* Dokąd jedziemy */}
-                  <div className="flex-1 min-w-[200px]">
-                    <PlaceAutocomplete
-                      value={formData.toCity}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
-                      placeholder="Dokąd?"
-                      name="toCity"
-                      icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                        </svg>
-                      }
-                    />
-                  </div>
-
-                  {/* Date Range Picker */}
-                  <div className="flex-1 min-w-[220px] relative" ref={datePickerRef}>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428] z-10">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        value={formatDateRange()}
-                        onClick={() => setShowDatePicker(!showDatePicker)}
-                        readOnly
-                        placeholder="Wybierz daty"
-                        className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all cursor-pointer"
+            {/* Search Form - Nowy Layout */}
+            <div className="max-w-4xl mx-auto mt-12 px-4">
+              <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8">
+                {/* 2 Kolumny */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* LEWA KOLUMNA - Trasa */}
+                  <div className="space-y-4">
+                    {/* Skąd */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#215387] mb-2">Skąd</label>
+                      <PlaceAutocomplete
+                        value={formData.fromCity}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
+                        placeholder="Wpisz miejsce wyjazdu"
+                        name="fromCity"
+                        icon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        }
                       />
                     </div>
-                    {showDatePicker && (
-                      <div className="absolute top-full mt-2 z-50 bg-white rounded-xl shadow-2xl border-2 border-gray-200">
-                        <DateRangePicker
-                          ranges={dateRange}
-                          onChange={(item: any) => setDateRange([item.selection])}
-                          locale={pl}
-                          moveRangeOnFirstSelection={false}
-                          months={2}
-                          direction="horizontal"
-                          rangeColors={['#ffc428']}
-                          showDateDisplay={false}
-                          staticRanges={[]}
-                          inputRanges={[]}
+
+                    {/* Dokąd */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
+                      <PlaceAutocomplete
+                        value={formData.toCity}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
+                        placeholder="Wpisz miejsce docelowe"
+                        name="toCity"
+                        icon={
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                          </svg>
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {/* PRAWA KOLUMNA - Szczegóły */}
+                  <div className="space-y-4">
+                    {/* Data i godzina */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#215387] mb-2">Data i godzina odjazdu</label>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428] z-10">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="datetime-local"
+                          name="departureDateTime"
+                          value={`${formData.departureDate}T${formData.departureTime}`}
+                          onChange={(e) => {
+                            const [date, time] = e.target.value.split('T');
+                            setFormData((prev) => ({ ...prev, departureDate: date, departureTime: time }));
+                          }}
+                          required
+                          min={`${new Date().toISOString().split('T')[0]}T00:00`}
+                          className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
                         />
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Liczba pasażerów */}
-                  <div className="flex-1 min-w-[150px]">
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428]">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
+                    {/* Liczba pasażerów */}
+                    <div>
+                      <label className="block text-sm font-semibold text-[#215387] mb-2">Liczba pasażerów</label>
+                      <div className="relative">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428]">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                        </div>
+                        <input
+                          type="number"
+                          name="passengerCount"
+                          value={formData.passengerCount}
+                          onChange={handleChange}
+                          placeholder="Liczba osób"
+                          min="1"
+                          required
+                          className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                        />
                       </div>
-                      <input
-                        type="number"
-                        name="passengerCount"
-                        value={formData.passengerCount}
-                        onChange={handleChange}
-                        placeholder="Osoby"
-                        min="1"
-                        required
-                        className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-                      />
                     </div>
                   </div>
-
-                  {/* Przycisk Submit */}
-                  <div className="flex-shrink-0">
-                    <button
-                      type="submit"
-                      className="w-full lg:w-auto px-8 py-3.5 text-base bg-[#ffc428] text-[#215387] rounded-xl hover:bg-[#f5b920] transition-all font-bold shadow-lg hover:shadow-xl hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      Szukaj
-                    </button>
-                  </div>
                 </div>
+
+                {/* Przycisk Submit - Pełna szerokość */}
+                <button
+                  type="submit"
+                  className="w-full px-8 py-4 text-lg bg-[#ffc428] text-[#215387] rounded-xl hover:bg-[#f5b920] transition-all font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center justify-center gap-3"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Szukaj transportu
+                </button>
 
                 {/* Więcej opcji */}
                 <div className="text-center">
@@ -809,6 +763,5 @@ export default function Home() {
         </div>
       </div>
     </div>
-    </LoadScript>
   );
 }

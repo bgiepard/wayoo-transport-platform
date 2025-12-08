@@ -22,7 +22,8 @@
       "Bash(git pull:*)",
       "Bash(taskkill:*)",
       "WebFetch(domain:wakacje.pl)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:www.e-podroznik.pl)"
     ],
     "deny": [],
     "ask": []

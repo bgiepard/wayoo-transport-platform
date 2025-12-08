@@ -6,9 +6,6 @@ import { transportRequests, getOffersByRequestId } from '@/lib/data';
 export default function PassengerRequestsPage() {
   const { currentUser } = useAuth();
   const [allRequests, setAllRequests] = useState(transportRequests);
-  const [searchCity, setSearchCity] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
 
   // Load requests from localStorage on mount
   useEffect(() => {
@@ -24,35 +21,10 @@ export default function PassengerRequestsPage() {
     setAllRequests([...parsedRequests, ...transportRequests]);
   }, []);
 
-  // Filter requests for current user
-  let myRequests = allRequests.filter((r) => r.userId === currentUser?.id);
-
-  // Apply filters
-  if (searchCity) {
-    myRequests = myRequests.filter(
-      (r) =>
-        r.from.city.toLowerCase().includes(searchCity.toLowerCase()) ||
-        r.to.city.toLowerCase().includes(searchCity.toLowerCase())
-    );
-  }
-
-  if (filterStatus !== 'all') {
-    myRequests = myRequests.filter((r) => r.status === filterStatus);
-  }
-
-  // Apply sorting
-  myRequests = [...myRequests].sort((a, b) => {
-    if (sortBy === 'newest') {
-      return b.createdAt.getTime() - a.createdAt.getTime();
-    } else if (sortBy === 'oldest') {
-      return a.createdAt.getTime() - b.createdAt.getTime();
-    } else if (sortBy === 'date-asc') {
-      return a.departureDate.getTime() - b.departureDate.getTime();
-    } else if (sortBy === 'date-desc') {
-      return b.departureDate.getTime() - a.departureDate.getTime();
-    }
-    return 0;
-  });
+  // Filter requests for current user and sort by newest
+  const myRequests = allRequests
+    .filter((r) => r.userId === currentUser?.id)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('pl-PL', {
@@ -104,88 +76,8 @@ export default function PassengerRequestsPage() {
         </Link>
       </div>
 
-      {/* Layout with sidebar */}
-      <div className="grid md:grid-cols-4 gap-8">
-        {/* Filters Sidebar */}
-        <div className="md:col-span-1">
-          <div className="bg-white rounded-xl shadow-md p-6 sticky top-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Filtry</h3>
-
-            {/* Search by city */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Szukaj po trasie
-              </label>
-              <input
-                type="text"
-                value={searchCity}
-                onChange={(e) => setSearchCity(e.target.value)}
-                placeholder="np. Kraków, Warszawa"
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-              />
-            </div>
-
-            {/* Status filter */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Status
-              </label>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-              >
-                <option value="all">Wszystkie</option>
-                <option value="active">Aktywne</option>
-                <option value="offers_received">Otrzymano oferty</option>
-                <option value="booked">Zarezerwowane</option>
-                <option value="completed">Zrealizowane</option>
-                <option value="cancelled">Anulowane</option>
-              </select>
-            </div>
-
-            {/* Sort by */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Sortuj po
-              </label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
-              >
-                <option value="newest">Najnowsze</option>
-                <option value="oldest">Najstarsze</option>
-                <option value="date-asc">Data wyjazdu (rosnąco)</option>
-                <option value="date-desc">Data wyjazdu (malejąco)</option>
-              </select>
-            </div>
-
-            {/* Reset filters */}
-            <button
-              onClick={() => {
-                setSearchCity('');
-                setFilterStatus('all');
-                setSortBy('newest');
-              }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-            >
-              Wyczyść filtry
-            </button>
-
-            {/* Stats */}
-            <div className="mt-6 pt-6 border-t">
-              <div className="text-sm text-gray-600">
-                <p className="mb-2">
-                  Znaleziono: <span className="font-bold text-[#215387]">{myRequests.length}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Requests List */}
-        <div className="md:col-span-3">
+      {/* Requests List */}
+      <div>
       {myRequests.length === 0 ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <div className="text-6xl mb-4">📋</div>
@@ -373,7 +265,6 @@ export default function PassengerRequestsPage() {
           })}
         </div>
       )}
-        </div>
       </div>
     </div>
   );

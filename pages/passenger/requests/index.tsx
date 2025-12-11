@@ -2,10 +2,22 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { transportRequests, getOffersByRequestId } from '@/lib/data';
+import type { Location } from '@/lib/types';
 
 export default function PassengerRequestsPage() {
   const { currentUser } = useAuth();
   const [allRequests, setAllRequests] = useState(transportRequests);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [expandedRequirements, setExpandedRequirements] = useState<Set<string>>(new Set());
+
+  // Update current time every minute for countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
 
   // Load requests from localStorage on mount
   useEffect(() => {
@@ -58,6 +70,58 @@ export default function PassengerRequestsPage() {
         {labels[status as keyof typeof labels]}
       </span>
     );
+  };
+
+  const getTimeRemaining = (createdAt: Date) => {
+    const expiryTime = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000); // 24 hours from creation
+    const now = currentTime;
+    const diff = expiryTime.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return { hours: 0, minutes: 0, expired: true };
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { hours, minutes, expired: false };
+  };
+
+  const getTimeColor = (hours: number, expired: boolean) => {
+    if (expired) return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
+    if (hours < 6) return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
+    if (hours < 12) return { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' };
+    return { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' };
+  };
+
+  const toggleRequirements = (requestId: string) => {
+    setExpandedRequirements(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (from: Location, to: Location): number | null => {
+    if (!from.coordinates || !to.coordinates) return null;
+
+    const R = 6371; // Earth's radius in km
+    const dLat = (to.coordinates.lat - from.coordinates.lat) * Math.PI / 180;
+    const dLon = (to.coordinates.lng - from.coordinates.lng) * Math.PI / 180;
+    const lat1 = from.coordinates.lat * Math.PI / 180;
+    const lat2 = to.coordinates.lat * Math.PI / 180;
+
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    return Math.round(distance);
   };
 
   return (
@@ -135,10 +199,21 @@ export default function PassengerRequestsPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-center px-4">
+                      <div className="flex flex-col items-center justify-center px-4 gap-2">
                         <svg className="w-8 h-8 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
+                        {(() => {
+                          const distance = calculateDistance(request.from, request.to);
+                          if (distance) {
+                            return (
+                              <div className="bg-[#ffc428] text-[#215387] px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+                                {distance} km
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       <div className="flex-1">
@@ -199,34 +274,54 @@ export default function PassengerRequestsPage() {
                       </div>
                     )}
 
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="text-xs text-green-600 font-medium">Oferty</span>
-                      </div>
-                      <p className="text-2xl font-bold text-green-600">{offers.length}</p>
-                    </div>
-                  </div>
+                    {(() => {
+                      const timeRemaining = getTimeRemaining(request.createdAt);
+                      const colors = getTimeColor(timeRemaining.hours, timeRemaining.expired);
 
-                  {/* Additional info */}
-                  {(request.specialRequirements || request.budget?.max) && (
-                    <div className="flex gap-3 mb-6">
-                      {request.budget?.max && (
-                        <div className="flex-1 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                          <p className="text-xs text-green-700 font-medium mb-1">Maksymalny budżet</p>
-                          <p className="text-lg font-bold text-green-700">{request.budget.max} PLN</p>
+                      return (
+                        <div className={`${colors.bg} rounded-lg p-4 border-2 ${colors.border}`}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <svg className={`w-5 h-5 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span className={`text-xs ${colors.text} font-medium`}>Czas oferty</span>
+                          </div>
+                          {timeRemaining.expired ? (
+                            <p className={`text-lg font-bold ${colors.text}`}>Wygasło</p>
+                          ) : (
+                            <p className={`text-2xl font-bold ${colors.text}`}>
+                              {timeRemaining.hours}h {timeRemaining.minutes}m
+                            </p>
+                          )}
                         </div>
-                      )}
-                      {request.specialRequirements && (
-                        <div className="flex-1 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                          <p className="text-xs text-blue-700 font-medium mb-1">Wymagania specjalne</p>
-                          <p className="text-sm text-gray-700 line-clamp-2">{request.specialRequirements}</p>
+                      );
+                    })()}
+
+                    {/* Wymagania specjalne */}
+                    {request.specialRequirements && (
+                      <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-200">
+                        <div className="flex items-center gap-2 mb-1">
+                          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                          </svg>
+                          <span className="text-xs text-indigo-600 font-medium">Wymagania specjalne</span>
                         </div>
-                      )}
-                    </div>
-                  )}
+                        <div>
+                          <p className={`text-sm text-gray-700 ${!expandedRequirements.has(request.id) ? 'line-clamp-2' : ''}`}>
+                            {request.specialRequirements}
+                          </p>
+                          {request.specialRequirements.length > 80 && (
+                            <button
+                              onClick={() => toggleRequirements(request.id)}
+                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-1"
+                            >
+                              {expandedRequirements.has(request.id) ? '▲ Zwiń' : '▼ Rozwiń'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-4 border-t">

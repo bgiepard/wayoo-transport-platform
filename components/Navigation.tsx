@@ -140,32 +140,29 @@ export default function Navigation() {
             {/* Role Switcher */}
             <div className="border-l border-white/30 pl-6 flex items-center gap-3">
               <button
+                type="button"
                 onClick={() => {
-                  // Przełącz na pasażera (Jan Kowalski - id: 1)
-                  const passenger = users.find((u) => u.id === '1');
-                  setCurrentUser(passenger || null);
+                  if (isCarrier) {
+                    // Przełącz na pasażera (Jan Kowalski - id: 1)
+                    const passenger = users.find((u) => u.id === '1');
+                    setCurrentUser(passenger || null);
+                  } else {
+                    // Przełącz na przewoźnika (Michał Wiśniewski - id: 3)
+                    const carrier = users.find((u) => u.id === '3');
+                    setCurrentUser(carrier || null);
+                  }
                 }}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  isPassenger
-                    ? 'bg-[#ffc428] text-[#215387] shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
+                className="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full hover:bg-white/20 transition-all"
               >
-                Pasażer
-              </button>
-              <button
-                onClick={() => {
-                  // Przełącz na przewoźnika (Michał Wiśniewski - id: 3)
-                  const carrier = users.find((u) => u.id === '3');
-                  setCurrentUser(carrier || null);
-                }}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  isCarrier
-                    ? 'bg-[#ffc428] text-[#215387] shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                Przewoźnik
+                <span className="text-sm font-semibold text-white">
+                  Przewoźnik
+                </span>
+                <div className="relative w-12 h-6 bg-white/20 rounded-full transition-colors" style={{ backgroundColor: isCarrier ? '#ffc428' : 'rgba(255, 255, 255, 0.2)' }}>
+                  <div
+                    className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform"
+                    style={{ transform: isCarrier ? 'translateX(24px)' : 'translateX(0)' }}
+                  />
+                </div>
               </button>
             </div>
           </div>

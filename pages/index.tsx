@@ -10,6 +10,7 @@ export default function Home() {
   const router = useRouter();
   const [showMoreOptions, setShowMoreOptions] = useState(false);
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
+  const [showCompactSearch, setShowCompactSearch] = useState(false);
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
 
   // Ustaw domyślną datę na jutro i godzinę na 12:00
@@ -93,11 +94,11 @@ export default function Home() {
         <div
         className="relative min-h-[700px] pb-[120px] bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/wayoo-background.jpg)',
+          backgroundImage: 'url(/new_bg.jpg)',
         }}
       >
         {/* Overlay dla lepszej czytelności */}
-        <div className="absolute inset-0 bg-[#215387]/20"></div>
+        <div className="absolute inset-0 bg-[#081c83]/50"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center space-y-8">
@@ -119,6 +120,7 @@ export default function Home() {
             </div>
 
             {/* Search Form - Nowy Layout */}
+            {!showCompactSearch && (
             <div className="max-w-4xl mx-auto mt-12 px-4">
               <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8">
                 {/* 2 Kolumny */}
@@ -317,9 +319,11 @@ export default function Home() {
                 </button>
               </form>
             </div>
+            )}
 
             {/* Nowa wyszukiwarka - 5 Kolumn */}
-            <div className="max-w-6xl mx-auto mt-8 px-4">
+            {showCompactSearch && (
+            <div className="max-w-6xl mx-auto mt-12 px-4">
               <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8">
                 {/* 5 Kolumn */}
                 <div className="grid grid-cols-1 gap-6 items-end" style={{ gridTemplateColumns: '1fr 1fr 1fr 0.66fr 1fr' }}>
@@ -359,7 +363,7 @@ export default function Home() {
                   {/* Kolumna 3 - Data i godzina */}
                   <div>
                     <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Data i godzina</label>
-                    <div className="relative">
+                    <div className="relative" ref={dateTimePickerRef}>
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428] z-10 pointer-events-none">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -373,6 +377,45 @@ export default function Home() {
                         className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all cursor-pointer"
                         placeholder="Wybierz"
                       />
+
+                      {/* Dropdown */}
+                      {showDateTimePicker && (
+                        <div className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border-2 border-gray-200 p-4">
+                          <div className="space-y-4">
+                            {/* Data */}
+                            <div>
+                              <label className="block text-sm font-semibold text-[#215387] mb-2">Data</label>
+                              <input
+                                type="date"
+                                value={formData.departureDate}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, departureDate: e.target.value }))}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                              />
+                            </div>
+
+                            {/* Godzina */}
+                            <div>
+                              <label className="block text-sm font-semibold text-[#215387] mb-2">Godzina</label>
+                              <input
+                                type="time"
+                                value={formData.departureTime}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, departureTime: e.target.value }))}
+                                className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                              />
+                            </div>
+
+                            {/* Przycisk Zapisz */}
+                            <button
+                              type="button"
+                              onClick={() => setShowDateTimePicker(false)}
+                              className="w-full px-4 py-2.5 bg-[#ffc428] text-[#215387] rounded-lg hover:bg-[#f5b920] transition-all font-bold"
+                            >
+                              Zapisz
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -405,6 +448,26 @@ export default function Home() {
                   </div>
                 </div>
               </form>
+            </div>
+            )}
+
+            {/* Switch do przełączania wyszukiwarek */}
+            <div className="max-w-6xl mx-auto mt-6 px-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowCompactSearch(!showCompactSearch)}
+                className="flex items-center gap-3 px-6 py-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all border-2 border-gray-200 hover:border-[#ffc428]"
+              >
+                <span className="text-sm font-semibold text-[#215387]">
+                  {showCompactSearch ? 'Widok standardowy' : 'Widok kompaktowy'}
+                </span>
+                <div className="relative w-12 h-6 bg-gray-300 rounded-full transition-colors" style={{ backgroundColor: showCompactSearch ? '#ffc428' : '#d1d5db' }}>
+                  <div
+                    className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform"
+                    style={{ transform: showCompactSearch ? 'translateX(24px)' : 'translateX(0)' }}
+                  />
+                </div>
+              </button>
             </div>
           </div>
         </div>

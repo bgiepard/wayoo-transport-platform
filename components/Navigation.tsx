@@ -204,8 +204,8 @@ export default function Navigation() {
               </button>
 
               {openDropdown === index && (
-                <div className="absolute left-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                  <div className="py-2">
+                <div className="absolute left-0 mt-0 pt-2 w-56 z-50">
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-lg py-2">
                     {menu.links.map((link, linkIndex) => (
                       <Link
                         key={linkIndex}

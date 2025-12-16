@@ -1,15 +1,17 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import '@/app/globals.css';
 import { AuthProvider } from '@/lib/auth-context';
-import Navigation from '@/components/Navigation';
-import Footer from '@/components/Footer';
+import DriverLayout from '@/components/layouts/DriverLayout';
+import PassengerLayout from '@/components/layouts/PassengerLayout';
 import PasswordModal from '@/components/PasswordModal';
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // Sprawdź czy użytkownik jest już autoryzowany
@@ -29,6 +31,10 @@ export default function App({ Component, pageProps }: AppProps) {
     return null;
   }
 
+  // Determine which layout to use based on the path
+  const isDriverPanel = router.pathname.startsWith('/driver');
+  const Layout = isDriverPanel ? DriverLayout : PassengerLayout;
+
   return (
     <>
       <Head>
@@ -44,12 +50,10 @@ export default function App({ Component, pageProps }: AppProps) {
       {!isAuthorized && <PasswordModal onSuccess={handlePasswordSuccess} />}
 
       <AuthProvider>
-        <div className="flex flex-col min-h-screen bg-gray-50" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-          <Navigation />
-          <main className="flex-grow">
+        <div style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <Layout>
             <Component {...pageProps} />
-          </main>
-          <Footer />
+          </Layout>
         </div>
       </AuthProvider>
     </>

@@ -3,12 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
-import { users, transportRequests, offers } from '@/lib/data';
-import { useState } from 'react';
+import { transportRequests, offers } from '@/lib/data';
+import { useState, useRef, useEffect } from 'react';
 
 export default function Navigation() {
-  const { currentUser, setCurrentUser, isPassenger, isCarrier } = useAuth();
+  const { currentUser } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement>(null);
 
   const menuItems = [
     {
@@ -79,6 +81,56 @@ export default function Navigation() {
 
   const newOffersCount = getNewOffersCount();
 
+  // Get notifications (new offers with request details)
+  const getNotifications = () => {
+    if (!currentUser || currentUser.role !== 'passenger') return [];
+    const myRequests = transportRequests.filter((r) => r.userId === currentUser.id);
+    const notifications: Array<{ request: typeof transportRequests[0]; offersCount: number }> = [];
+
+    myRequests.forEach((request) => {
+      const pendingOffers = offers.filter(
+        (o) => o.requestId === request.id && o.status === 'pending'
+      );
+      if (pendingOffers.length > 0) {
+        notifications.push({
+          request,
+          offersCount: pendingOffers.length,
+        });
+      }
+    });
+
+    return notifications.sort(
+      (a, b) => b.request.updatedAt.getTime() - a.request.updatedAt.getTime()
+    );
+  };
+
+  const notifications = getNotifications();
+
+  // Close notifications dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 60) return `${minutes} min temu`;
+    if (hours < 24) return `${hours}h temu`;
+    if (days < 7) return `${days} dni temu`;
+    return date.toLocaleDateString('pl-PL');
+  };
+
   return (
     <>
       <nav className="bg-[#081c83] shadow-lg">
@@ -100,71 +152,143 @@ export default function Navigation() {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-6">
-            {isPassenger && (
-              <Link
-                href="/passenger/requests"
-                className="text-white hover:text-[#ffc428] font-medium transition-colors relative inline-flex items-center gap-2 mr-9"
+            {/* Notifications Icon with Dropdown */}
+            <div className="relative" ref={notificationsRef}>
+              <button
+                type="button"
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="text-white hover:text-[#ffc428] transition-colors relative inline-flex items-center"
+                title="Powiadomienia"
               >
-                Moje Zapytania
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
                 {newOffersCount > 0 && (
-                  <span className="absolute -top-2 -right-6 bg-[#ffc428] text-[#215387] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-[#ffc428] text-[#215387] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                     {newOffersCount}
                   </span>
                 )}
-              </Link>
-            )}
-
-            {isCarrier && (
-              <>
-                <Link
-                  href="/carrier/requests"
-                  className="text-white hover:text-[#ffc428] font-medium transition-colors"
-                >
-                  Zapytania
-                </Link>
-                <Link
-                  href="/carrier/my-offers"
-                  className="text-white hover:text-[#ffc428] font-medium transition-colors"
-                >
-                  Moje Oferty
-                </Link>
-                <Link
-                  href="/carrier/vehicles"
-                  className="text-white hover:text-[#ffc428] font-medium transition-colors"
-                >
-                  Flota
-                </Link>
-              </>
-            )}
-
-            {/* Role Switcher */}
-            <div className="border-l border-white/30 pl-6 flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isCarrier) {
-                    // Przełącz na pasażera (Jan Kowalski - id: 1)
-                    const passenger = users.find((u) => u.id === '1');
-                    setCurrentUser(passenger || null);
-                  } else {
-                    // Przełącz na przewoźnika (Michał Wiśniewski - id: 3)
-                    const carrier = users.find((u) => u.id === '3');
-                    setCurrentUser(carrier || null);
-                  }
-                }}
-                className="flex items-center gap-3 px-4 py-2 bg-white/10 rounded-full hover:bg-white/20 transition-all"
-              >
-                <span className="text-sm font-semibold text-white">
-                  Przewoźnik
-                </span>
-                <div className="relative w-12 h-6 bg-white/20 rounded-full transition-colors" style={{ backgroundColor: isCarrier ? '#ffc428' : 'rgba(255, 255, 255, 0.2)' }}>
-                  <div
-                    className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform"
-                    style={{ transform: isCarrier ? 'translateX(24px)' : 'translateX(0)' }}
-                  />
-                </div>
               </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 top-full mt-2 w-96 z-50">
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-2xl py-2 max-h-[500px] overflow-y-auto">
+                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                      <h3 className="font-bold text-gray-900">Powiadomienia</h3>
+                      {newOffersCount > 0 && (
+                        <span className="text-xs text-gray-500">
+                          {newOffersCount} {newOffersCount === 1 ? 'nowa' : 'nowych'}
+                        </span>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <div className="text-4xl mb-2">🔔</div>
+                        <p className="text-gray-500 text-sm">Brak nowych powiadomień</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {notifications.map(({ request, offersCount }) => (
+                          <Link
+                            key={request.id}
+                            href={`/passenger/requests/${request.id}`}
+                            onClick={() => setShowNotifications(false)}
+                            className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 w-10 h-10 bg-[#ffc428] rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-5 h-5 text-[#215387]"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  />
+                                </svg>
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {offersCount} {offersCount === 1 ? 'nowa oferta' : 'nowe oferty'}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {request.from.city} → {request.to.city}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {formatDate(request.updatedAt)}
+                                </p>
+                              </div>
+
+                              <svg
+                                className="w-4 h-4 text-gray-400 flex-shrink-0"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {notifications.length > 0 && (
+                      <div className="px-4 py-3 border-t border-gray-200">
+                        <Link
+                          href="/passenger/requests"
+                          onClick={() => setShowNotifications(false)}
+                          className="text-sm text-[#215387] hover:text-[#1a4469] font-medium flex items-center justify-center gap-1"
+                        >
+                          Zobacz wszystkie zapytania
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            <Link
+              href="/passenger/requests"
+              className="text-white hover:text-[#ffc428] font-medium transition-colors"
+            >
+              Moje Zapytania
+            </Link>
+
+            <Link
+              href="/passenger/account"
+              className="text-white hover:text-[#ffc428] font-medium transition-colors"
+            >
+              Moje Konto
+            </Link>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import { User } from './types';
 import { users } from './data';
 
@@ -14,8 +15,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Default to first passenger user
-  const [currentUser, setCurrentUser] = useState<User | null>(users[0]);
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Poczekaj aż router będzie gotowy
+    if (!router.isReady) return;
+
+    // Automatyczne ustawienie użytkownika na podstawie ścieżki URL
+    const path = router.pathname;
+
+    if (path.startsWith('/driver')) {
+      // Panel przewoźnika - ustaw przewoźnika (Michał Wiśniewski - id: 3)
+      const carrier = users.find((u) => u.id === '3' && u.role === 'carrier');
+      setCurrentUser(carrier || null);
+    } else {
+      // Panel pasażera - ustaw pasażera (Jan Kowalski - id: 1)
+      const passenger = users.find((u) => u.id === '1' && u.role === 'passenger');
+      setCurrentUser(passenger || null);
+    }
+  }, [router.isReady, router.pathname]);
 
   const isPassenger = currentUser?.role === 'passenger';
   const isCarrier = currentUser?.role === 'carrier';

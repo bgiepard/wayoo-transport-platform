@@ -462,148 +462,124 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. Opinie przewoźników - Reviews Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Opinie Przewoźników</h2>
-          <p className="text-xl text-gray-600">Zobacz co mówią o nas pasażerowie</p>
-        </div>
+      {/*/!* 3. Opinie przewoźników - Reviews Section *!/*/}
+      {/*<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">*/}
+      {/*  <div className="text-center mb-12">*/}
+      {/*    <h2 className="text-4xl font-bold text-gray-900 mb-4">Opinie Przewoźników</h2>*/}
+      {/*    <p className="text-xl text-gray-600">Zobacz co mówią o nas pasażerowie</p>*/}
+      {/*  </div>*/}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Review 1 - Fast Transport */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#ffc428] to-[#f5b920] rounded-full flex items-center justify-center text-2xl">
-                🚐
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">Fast Transport</h4>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              "Fantastyczna obsługa! Kierowca profesjonalny, autobus czysty i punktualność na najwyższym poziomie. Polecamy dla wyjazdów firmowych."
-            </p>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="font-semibold">Anna Kowalska</span>
-              <span>•</span>
-              <span>Wycieczka do Krakowa</span>
-            </div>
-          </div>
+      {/*  <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">*/}
+      {/*    /!* Review 1 - Fast Transport *!/*/}
+      {/*    <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">*/}
+      {/*      <div className="flex items-center gap-3 mb-4">*/}
+      {/*        <div className="w-12 h-12 bg-gradient-to-br from-[#ffc428] to-[#f5b920] rounded-full flex items-center justify-center text-2xl">*/}
+      {/*          🚐*/}
+      {/*        </div>*/}
+      {/*        <div>*/}
+      {/*          <h4 className="font-bold text-gray-900">Fast Transport</h4>*/}
+      {/*          <div className="flex gap-1">*/}
+      {/*            {[1, 2, 3, 4, 5].map((star) => (*/}
+      {/*              <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">*/}
+      {/*                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />*/}
+      {/*              </svg>*/}
+      {/*            ))}*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*      <p className="text-gray-600 text-sm leading-relaxed mb-4">*/}
+      {/*        "Fantastyczna obsługa! Kierowca profesjonalny, autobus czysty i punktualność na najwyższym poziomie. Polecamy dla wyjazdów firmowych."*/}
+      {/*      </p>*/}
+      {/*      <div className="flex items-center gap-2 text-sm text-gray-500">*/}
+      {/*        <span className="font-semibold">Anna Kowalska</span>*/}
+      {/*        <span>•</span>*/}
+      {/*        <span>Wycieczka do Krakowa</span>*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
 
-          {/* Review 2 - BusLine Premium */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#215387] to-[#1a4469] rounded-full flex items-center justify-center text-2xl">
-                🚌
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">BusLine Premium</h4>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              "Najlepszy przewoźnik z jakim mieliśmy przyjemność współpracować. WiFi w autobusie, wygodne fotele i miła atmosfera. Dziękujemy!"
-            </p>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="font-semibold">Piotr Nowak</span>
-              <span>•</span>
-              <span>Wyjazd integracyjny</span>
-            </div>
-          </div>
+      {/*    /!* Review 2 - BusLine Premium *!/*/}
+      {/*    <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">*/}
+      {/*      <div className="flex items-center gap-3 mb-4">*/}
+      {/*        <div className="w-12 h-12 bg-gradient-to-br from-[#215387] to-[#1a4469] rounded-full flex items-center justify-center text-2xl">*/}
+      {/*          🚌*/}
+      {/*        </div>*/}
+      {/*        <div>*/}
+      {/*          <h4 className="font-bold text-gray-900">BusLine Premium</h4>*/}
+      {/*          <div className="flex gap-1">*/}
+      {/*            {[1, 2, 3, 4, 5].map((star) => (*/}
+      {/*              <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">*/}
+      {/*                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />*/}
+      {/*              </svg>*/}
+      {/*            ))}*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*      <p className="text-gray-600 text-sm leading-relaxed mb-4">*/}
+      {/*        "Najlepszy przewoźnik z jakim mieliśmy przyjemność współpracować. WiFi w autobusie, wygodne fotele i miła atmosfera. Dziękujemy!"*/}
+      {/*      </p>*/}
+      {/*      <div className="flex items-center gap-2 text-sm text-gray-500">*/}
+      {/*        <span className="font-semibold">Piotr Nowak</span>*/}
+      {/*        <span>•</span>*/}
+      {/*        <span>Wyjazd integracyjny</span>*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
 
-          {/* Review 3 - EcoTransport */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-2xl">
-                🌱
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">EcoTransport</h4>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              "Elektryczne busy to przyszłość! Cicha jazda, ekologiczny transport i świetna cena. Zdecydowanie wybierzemy Was ponownie."
-            </p>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="font-semibold">Katarzyna Wiśniewska</span>
-              <span>•</span>
-              <span>Transfer lotniskowy</span>
-            </div>
-          </div>
+      {/*    /!* Review 3 - EcoTransport *!/*/}
+      {/*    <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">*/}
+      {/*      <div className="flex items-center gap-3 mb-4">*/}
+      {/*        <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-2xl">*/}
+      {/*          🌱*/}
+      {/*        </div>*/}
+      {/*        <div>*/}
+      {/*          <h4 className="font-bold text-gray-900">EcoTransport</h4>*/}
+      {/*          <div className="flex gap-1">*/}
+      {/*            {[1, 2, 3, 4, 5].map((star) => (*/}
+      {/*              <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">*/}
+      {/*                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />*/}
+      {/*              </svg>*/}
+      {/*            ))}*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*      <p className="text-gray-600 text-sm leading-relaxed mb-4">*/}
+      {/*        "Elektryczne busy to przyszłość! Cicha jazda, ekologiczny transport i świetna cena. Zdecydowanie wybierzemy Was ponownie."*/}
+      {/*      </p>*/}
+      {/*      <div className="flex items-center gap-2 text-sm text-gray-500">*/}
+      {/*        <span className="font-semibold">Katarzyna Wiśniewska</span>*/}
+      {/*        <span>•</span>*/}
+      {/*        <span>Transfer lotniskowy</span>*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
 
-          {/* Review 4 - Express Travel */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-2xl">
-                ⚡
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">Express Travel</h4>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">
-                      <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                    </svg>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <p className="text-gray-600 text-sm leading-relaxed mb-4">
-              "Szybko, sprawnie i bezproblemowo. Doskonały wybór na transfer na lotnisko. Polecamy każdemu!"
-            </p>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span className="font-semibold">Marek Zieliński</span>
-              <span>•</span>
-              <span>Wyjazd do Zakopanego</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/*    /!* Review 4 - Express Travel *!/*/}
+      {/*    <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow border border-gray-100">*/}
+      {/*      <div className="flex items-center gap-3 mb-4">*/}
+      {/*        <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-2xl">*/}
+      {/*          ⚡*/}
+      {/*        </div>*/}
+      {/*        <div>*/}
+      {/*          <h4 className="font-bold text-gray-900">Express Travel</h4>*/}
+      {/*          <div className="flex gap-1">*/}
+      {/*            {[1, 2, 3, 4, 5].map((star) => (*/}
+      {/*              <svg key={star} className="w-4 h-4 text-[#ffc428] fill-current" viewBox="0 0 20 20">*/}
+      {/*                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />*/}
+      {/*              </svg>*/}
+      {/*            ))}*/}
+      {/*          </div>*/}
+      {/*        </div>*/}
+      {/*      </div>*/}
+      {/*      <p className="text-gray-600 text-sm leading-relaxed mb-4">*/}
+      {/*        "Szybko, sprawnie i bezproblemowo. Doskonały wybór na transfer na lotnisko. Polecamy każdemu!"*/}
+      {/*      </p>*/}
+      {/*      <div className="flex items-center gap-2 text-sm text-gray-500">*/}
+      {/*        <span className="font-semibold">Marek Zieliński</span>*/}
+      {/*        <span>•</span>*/}
+      {/*        <span>Wyjazd do Zakopanego</span>*/}
+      {/*      </div>*/}
+      {/*    </div>*/}
+      {/*  </div>*/}
+      {/*</div>*/}
 
-      {/* 4. wayoo w liczbach - Stats */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] rounded-2xl shadow-2xl p-12">
-          <h3 className="text-3xl font-bold text-white text-center mb-12">wayoo w liczbach</h3>
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-[#ffc428] mb-2">150+</div>
-              <div className="text-white/90 text-lg">Przewoźników</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-[#ffc428] mb-2">2,500+</div>
-              <div className="text-white/90 text-lg">Zrealizowanych tras</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-[#ffc428] mb-2">4.8</div>
-              <div className="text-white/90 text-lg">Średnia ocen</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-[#ffc428] mb-2">98%</div>
-              <div className="text-white/90 text-lg">Zadowolonych klientów</div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

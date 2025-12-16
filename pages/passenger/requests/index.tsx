@@ -124,6 +124,49 @@ export default function PassengerRequestsPage() {
     return Math.round(distance);
   };
 
+  // Get progress steps for a request
+  const getProgressSteps = (request: typeof myRequests[0], offers: any[]) => {
+    const pendingOffers = offers.filter(o => o.status === 'pending');
+
+    return [
+      {
+        id: 1,
+        title: 'Zlecenie zostało złożone',
+        description: 'Twoje zapytanie zostało pomyślnie utworzone',
+        status: 'completed' as const,
+        icon: '✓',
+      },
+      {
+        id: 2,
+        title: 'Nasi przewoźnicy dostali informację',
+        description: 'Twoje zapytanie jest widoczne dla przewoźników',
+        status: request.status === 'active' ? 'active' as const : 'completed' as const,
+        icon: request.status === 'active' ? '⏳' : '✓',
+      },
+      {
+        id: 3,
+        title: 'Sprawdź oferty przewoźników',
+        description: `${pendingOffers.length > 0 ? `Otrzymano ${pendingOffers.length} ${pendingOffers.length === 1 ? 'ofertę' : 'oferty'}` : 'Oczekiwanie na oferty'}`,
+        status: pendingOffers.length > 0 ? 'active' as const : 'pending' as const,
+        icon: pendingOffers.length > 0 ? '⏳' : '○',
+      },
+      {
+        id: 4,
+        title: 'Wybierz ofertę i ruszaj w drogę',
+        description: request.status === 'booked' || request.status === 'completed'
+          ? 'Oferta zaakceptowana!'
+          : 'Wybierz najlepszą ofertę',
+        status: request.status === 'booked' || request.status === 'completed' ? 'completed' as const : 'pending' as const,
+        icon: request.status === 'booked' || request.status === 'completed' ? '✓' : '○',
+      },
+    ];
+  };
+
+  // Get latest request (most recent)
+  const latestRequest = myRequests.length > 0 ? myRequests[0] : null;
+  const latestOffers = latestRequest ? getOffersByRequestId(latestRequest.id) : [];
+  const progressSteps = latestRequest ? getProgressSteps(latestRequest, latestOffers) : [];
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Header */}
@@ -138,6 +181,141 @@ export default function PassengerRequestsPage() {
         >
           + Nowe Zapytanie
         </Link>
+      </div>
+
+      {/* Latest Request Progress Section */}
+      {latestRequest && (
+        <div className="mb-12">
+          <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] rounded-t-2xl px-6 py-4">
+            <h2 className="text-2xl font-bold text-white">Twoje ostatnie zapytanie</h2>
+          </div>
+
+          <div className="bg-white rounded-b-2xl shadow-xl border-2 border-[#ffc428] p-8">
+            {/* Request Summary */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {latestRequest.from.city} → {latestRequest.to.city}
+                  </h3>
+                  {getStatusBadge(latestRequest.status)}
+                </div>
+                <Link
+                  href={`/passenger/requests/${latestRequest.id}`}
+                  className="text-[#215387] hover:text-[#1a4469] font-semibold flex items-center gap-2"
+                >
+                  Szczegóły
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+
+              <div className="flex items-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {formatDate(latestRequest.departureDate)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  {latestRequest.passengerCount} osób
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Steps - Horizontal */}
+            <div className="relative">
+              {/* Horizontal Progress Line */}
+              <div className="absolute top-8 left-0 right-0 flex items-center px-8">
+                <div className="flex-1 flex items-center gap-4">
+                  {progressSteps.map((step, index) => (
+                    <React.Fragment key={`line-${step.id}`}>
+                      {index > 0 && (
+                        <div
+                          className={`flex-1 h-1 ${
+                            progressSteps[index - 1].status === 'completed'
+                              ? 'bg-green-500'
+                              : 'bg-gray-300'
+                          }`}
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              {/* Steps */}
+              <div className="grid grid-cols-4 gap-4">
+                {progressSteps.map((step) => (
+                  <div key={step.id} className="relative flex flex-col items-center">
+                    {/* Step Icon */}
+                    <div
+                      className={`relative z-10 flex items-center justify-center w-16 h-16 rounded-full border-4 font-bold text-xl mb-4 ${
+                        step.status === 'completed'
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : step.status === 'active'
+                          ? 'bg-[#ffc428] border-[#ffc428] text-[#215387] animate-pulse'
+                          : 'bg-gray-100 border-gray-300 text-gray-400'
+                      }`}
+                    >
+                      {step.icon}
+                    </div>
+
+                    {/* Step Content */}
+                    <div
+                      className={`w-full p-4 rounded-lg transition-all text-center ${
+                        step.status === 'active'
+                          ? 'bg-yellow-50 border-2 border-[#ffc428]'
+                          : step.status === 'completed'
+                          ? 'bg-green-50 border-2 border-green-200'
+                          : 'bg-gray-50 border-2 border-gray-200'
+                      }`}
+                    >
+                      <h4
+                        className={`font-bold mb-2 ${
+                          step.status === 'pending' ? 'text-gray-400 text-sm' : 'text-gray-900 text-base'
+                        }`}
+                      >
+                        {step.title}
+                      </h4>
+                      <p
+                        className={`text-xs ${
+                          step.status === 'pending' ? 'text-gray-400' : 'text-gray-600'
+                        }`}
+                      >
+                        {step.description}
+                      </p>
+
+                      {/* Action Button for Step 3 */}
+                      {step.id === 3 && latestOffers.filter(o => o.status === 'pending').length > 0 && (
+                        <Link
+                          href={`/passenger/requests/${latestRequest.id}`}
+                          className="mt-3 inline-flex items-center gap-1 px-3 py-2 bg-[#215387] text-white rounded-lg hover:bg-[#1a4469] transition-colors font-semibold text-xs"
+                        >
+                          Zobacz
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* All Requests List */}
+      <div>
+        {myRequests.length > 1 && (
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Wszystkie zapytania</h2>
+        )}
       </div>
 
       {/* Requests List */}
@@ -156,7 +334,8 @@ export default function PassengerRequestsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {myRequests.map((request) => {
+          {/* Show all requests except the first one (which is shown above in progress section) */}
+          {myRequests.slice(1).map((request) => {
             const offers = getOffersByRequestId(request.id);
             const hasNewOffers = offers.filter(o => o.status === 'pending').length > 0;
 

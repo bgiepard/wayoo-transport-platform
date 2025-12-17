@@ -156,18 +156,6 @@ export default function DriverRequestDetailsPage() {
                   <p className="text-gray-700 text-sm">{request.specialRequirements}</p>
                 </div>
               )}
-
-              {request.budget?.max && (
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <h3 className="font-semibold text-gray-700 mb-2">Budżet klienta</h3>
-                  <p className="text-gray-700">
-                    Maksymalnie:{' '}
-                    <span className="font-bold text-lg">
-                      {request.budget.max} {request.budget.currency}
-                    </span>
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -298,16 +298,18 @@ export default function Home() {
     <div className="min-h-screen">
         {/* Hero Section with Background */}
         <div
-        className="relative min-h-[400px] pb-[50px] bg-cover bg-center bg-no-repeat"
-        // style={{
-        //   backgroundImage: 'url(/new_bg.jpg)',
-        // }}
+        className="relative min-h-[400px] pb-[50px] bg-cover bg-center bg-no-repeat bg-[#081c83]"
+        style={{
+          backgroundImage: 'url(/bg_3.png)',
+          backgroundSize: '35%',
+          backgroundPosition: '100% -150px',
+        }}
       >
         {/* Overlay dla lepszej czytelności */}
-        <div className="absolute inset-0 bg-[#081c83]/100"></div>
+        <div className="absolute inset-0 bg-[#081c83]/10"></div>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center space-y-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-4">
+          <div className="text-center space-y-8 max-w-[1100px]">
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">
                 Twój transport grupowy<br />
@@ -316,7 +318,7 @@ export default function Home() {
             </div>
 
             {/* Search Form - Kompaktowy Layout */}
-            <div className="mx-auto mt-12 px-4 relative" style={{ maxWidth: '1382px' }}>
+            <div className=" mt-12 px-4 relative" style={{ maxWidth: '1100px' }}>
               <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 relative" style={{ zIndex: 1 }}>
                 {/* 4 Kolumny */}
                 <div className="grid grid-cols-1 gap-6 items-end" style={{ gridTemplateColumns: '2fr 1fr 0.66fr 1fr' }}>

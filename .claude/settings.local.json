@@ -24,7 +24,9 @@
       "WebFetch(domain:wakacje.pl)",
       "Bash(npm install:*)",
       "WebFetch(domain:www.e-podroznik.pl)",
-      "WebFetch(domain:www.wakacje.pl)"
+      "WebFetch(domain:www.wakacje.pl)",
+      "Bash(npm run dev:*)",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []

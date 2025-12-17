@@ -8,7 +8,6 @@ export default function PassengerRequestsPage() {
   const { currentUser } = useAuth();
   const [allRequests, setAllRequests] = useState(transportRequests);
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [expandedRequirements, setExpandedRequirements] = useState<Set<string>>(new Set());
 
   // Update current time every minute for countdown
   useEffect(() => {
@@ -103,18 +102,6 @@ export default function PassengerRequestsPage() {
     if (hours < 6) return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' };
     if (hours < 12) return { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' };
     return { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' };
-  };
-
-  const toggleRequirements = (requestId: string) => {
-    setExpandedRequirements(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(requestId)) {
-        newSet.delete(requestId);
-      } else {
-        newSet.add(requestId);
-      }
-      return newSet;
-    });
   };
 
   // Calculate distance between two coordinates (Haversine formula)
@@ -513,32 +500,18 @@ export default function PassengerRequestsPage() {
                     </Link>
                   </div>
 
-                  {/* Wymagania specjalne */}
-                  {request.specialRequirements && (
-                    <div>
-                      <div className="bg-indigo-50 rounded-lg p-2 border border-indigo-200">
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                          </svg>
-                          <span className="text-xs text-indigo-600 font-medium">Wymagania specjalne</span>
-                        </div>
-                        <div>
-                          <p className={`text-xs text-gray-700 ${!expandedRequirements.has(request.id) ? 'line-clamp-2' : ''}`}>
-                            {request.specialRequirements}
-                          </p>
-                          {request.specialRequirements.length > 80 && (
-                            <button
-                              onClick={() => toggleRequirements(request.id)}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-0.5"
-                            >
-                              {expandedRequirements.has(request.id) ? '▲ Zwiń' : '▼ Rozwiń'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Zobacz szczegóły - przycisk */}
+                  <div className="mt-3">
+                    <Link
+                      href={`/passenger/requests/${request.id}`}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#215387] text-white rounded-lg hover:bg-[#1a4469] transition-colors font-medium text-sm"
+                    >
+                      Zobacz szczegóły zapytania
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

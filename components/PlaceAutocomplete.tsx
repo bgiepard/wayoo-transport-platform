@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 interface PlaceAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (value: string) => void;
   placeholder: string;
   name: string;
   icon: React.ReactNode;
@@ -21,6 +22,7 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoiYmdpZXBhcmQiLCJhIjoiY2p1eDNhMHdnMGY0YzRlbWwyd3J
 export default function PlaceAutocomplete({
   value,
   onChange,
+  onSelect,
   placeholder,
   name,
   icon,
@@ -93,6 +95,9 @@ export default function PlaceAutocomplete({
     onChange(placeName);
     setSuggestions([]);
     setShowDropdown(false);
+    if (onSelect) {
+      onSelect(placeName);
+    }
   };
 
   return (

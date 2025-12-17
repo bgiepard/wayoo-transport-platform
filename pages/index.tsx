@@ -50,6 +50,7 @@ export default function Home() {
   const [routePath, setRoutePath] = useState<[number, number][]>([]);
   const [allWaypoints, setAllWaypoints] = useState<{ lat: number; lng: number }[]>([]);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [routeReady, setRouteReady] = useState(false);
 
   // Helper function to extract city name from full address
   const extractCityName = (address: string): string => {
@@ -73,6 +74,10 @@ export default function Home() {
       ...prev,
       stops: prev.stops.filter((_, i) => i !== index),
     }));
+    // Clear route when removing a stop
+    setRouteReady(false);
+    setRoutePath([]);
+    setAllWaypoints([]);
   };
 
   // Update a stop by index
@@ -181,118 +186,118 @@ export default function Home() {
     setMapMounted(true);
   }, []);
 
-  // Geocode cities to get coordinates when they change
-  useEffect(() => {
-    const geocodeCity = async (city: string): Promise<{ lat: number; lng: number } | null> => {
-      try {
-        const response = await fetch(
-          `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&apiKey=11da404667ca45a78db6a73c3b6be0d9`
-        );
-        const data = await response.json();
-        if (data.features && data.features.length > 0) {
-          const [lng, lat] = data.features[0].geometry.coordinates;
-          return { lat, lng };
-        }
-      } catch (error) {
-        console.error('Geocoding error:', error);
+  // Geocode city to get coordinates
+  const geocodeCity = async (city: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      const response = await fetch(
+        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&apiKey=11da404667ca45a78db6a73c3b6be0d9`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].geometry.coordinates;
+        return { lat, lng };
       }
-      return null;
-    };
+    } catch (error) {
+      console.error('Geocoding error:', error);
+    }
+    return null;
+  };
 
-    const getRoute = async (waypoints: { lat: number; lng: number }[]) => {
-      if (waypoints.length < 2) return;
+  // Get route from API
+  const getRoute = async (waypoints: { lat: number; lng: number }[]) => {
+    if (waypoints.length < 2) return;
 
-      try {
-        // Build waypoints string for API: "lat1,lng1|lat2,lng2|lat3,lng3"
-        const waypointsStr = waypoints.map((wp) => `${wp.lat},${wp.lng}`).join('|');
+    try {
+      // Build waypoints string for API: "lat1,lng1|lat2,lng2|lat3,lng3"
+      const waypointsStr = waypoints.map((wp) => `${wp.lat},${wp.lng}`).join('|');
 
-        const response = await fetch(
-          `https://api.geoapify.com/v1/routing?waypoints=${waypointsStr}&mode=drive&apiKey=11da404667ca45a78db6a73c3b6be0d9`
-        );
-        const data = await response.json();
+      const response = await fetch(
+        `https://api.geoapify.com/v1/routing?waypoints=${waypointsStr}&mode=drive&apiKey=11da404667ca45a78db6a73c3b6be0d9`
+      );
+      const data = await response.json();
 
-        if (data.features && data.features.length > 0) {
-          const geometry = data.features[0].geometry;
-          let allCoordinates: [number, number][] = [];
+      if (data.features && data.features.length > 0) {
+        const geometry = data.features[0].geometry;
+        let allCoordinates: [number, number][] = [];
 
-          // Handle both LineString and MultiLineString
-          if (geometry.type === 'LineString') {
-            allCoordinates = geometry.coordinates;
-          } else if (geometry.type === 'MultiLineString') {
-            // Flatten all segments into one array
-            allCoordinates = geometry.coordinates.flat();
-          }
-
-          // Convert from [lng, lat] to [lat, lng] for Leaflet
-          const routePoints: [number, number][] = allCoordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
-          setRoutePath(routePoints);
-        }
-      } catch (error) {
-        console.error('Routing error:', error);
-        // Fallback to straight lines if routing fails
-        const fallbackPath: [number, number][] = waypoints.map((wp) => [wp.lat, wp.lng]);
-        setRoutePath(fallbackPath);
-      }
-    };
-
-    const updateCoordinates = async () => {
-      // Check if all stops are filled before proceeding
-      const allStopsFilled = formData.stops.every((stop) => stop !== '');
-
-      // If there are empty stops, clear the route
-      if (!allStopsFilled && formData.stops.length > 0) {
-        setAllWaypoints([]);
-        setRoutePath([]);
-        setIsLoadingRoute(false);
-        return;
-      }
-
-      setIsLoadingRoute(true);
-      const newCoords: { from?: { lat: number; lng: number }; to?: { lat: number; lng: number } } = {};
-
-      if (formData.fromCity) {
-        const fromCoords = await geocodeCity(formData.fromCity);
-        if (fromCoords) newCoords.from = fromCoords;
-      }
-
-      if (formData.toCity) {
-        const toCoords = await geocodeCity(formData.toCity);
-        if (toCoords) newCoords.to = toCoords;
-      }
-
-      setRouteCoordinates(newCoords);
-
-      // Build complete waypoints list including stops
-      if (newCoords.from && newCoords.to) {
-        const waypointsList: { lat: number; lng: number }[] = [newCoords.from];
-
-        // Add stops coordinates
-        for (const stop of formData.stops) {
-          if (stop) {
-            const stopCoords = await geocodeCity(stop);
-            if (stopCoords) waypointsList.push(stopCoords);
-          }
+        // Handle both LineString and MultiLineString
+        if (geometry.type === 'LineString') {
+          allCoordinates = geometry.coordinates;
+        } else if (geometry.type === 'MultiLineString') {
+          // Flatten all segments into one array
+          allCoordinates = geometry.coordinates.flat();
         }
 
-        waypointsList.push(newCoords.to);
-
-        // Save all waypoints for markers
-        setAllWaypoints(waypointsList);
-
-        // Get the route with all waypoints
-        await getRoute(waypointsList);
+        // Convert from [lng, lat] to [lat, lng] for Leaflet
+        const routePoints: [number, number][] = allCoordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+        setRoutePath(routePoints);
       }
+    } catch (error) {
+      console.error('Routing error:', error);
+      // Fallback to straight lines if routing fails
+      const fallbackPath: [number, number][] = waypoints.map((wp) => [wp.lat, wp.lng]);
+      setRoutePath(fallbackPath);
+    }
+  };
 
-      setIsLoadingRoute(false);
-    };
+  // Update route when a place is selected
+  const updateRoute = async () => {
+    // Check if all stops are filled before proceeding
+    const allStopsFilled = formData.stops.every((stop) => stop !== '');
 
-    if (formData.fromCity || formData.toCity || formData.stops.length > 0) {
-      updateCoordinates();
-    } else {
+    // If there are empty stops, clear the route
+    if (!allStopsFilled && formData.stops.length > 0) {
       setAllWaypoints([]);
       setRoutePath([]);
+      setRouteReady(false);
+      setIsLoadingRoute(false);
+      return;
     }
-  }, [formData.fromCity, formData.toCity, formData.stops]);
+
+    // Don't update if we don't have both from and to cities
+    if (!formData.fromCity || !formData.toCity) {
+      setAllWaypoints([]);
+      setRoutePath([]);
+      setRouteReady(false);
+      return;
+    }
+
+    setIsLoadingRoute(true);
+    setRouteReady(false);
+    const newCoords: { from?: { lat: number; lng: number }; to?: { lat: number; lng: number } } = {};
+
+    const fromCoords = await geocodeCity(formData.fromCity);
+    if (fromCoords) newCoords.from = fromCoords;
+
+    const toCoords = await geocodeCity(formData.toCity);
+    if (toCoords) newCoords.to = toCoords;
+
+    setRouteCoordinates(newCoords);
+
+    // Build complete waypoints list including stops
+    if (newCoords.from && newCoords.to) {
+      const waypointsList: { lat: number; lng: number }[] = [newCoords.from];
+
+      // Add stops coordinates
+      for (const stop of formData.stops) {
+        if (stop) {
+          const stopCoords = await geocodeCity(stop);
+          if (stopCoords) waypointsList.push(stopCoords);
+        }
+      }
+
+      waypointsList.push(newCoords.to);
+
+      // Save all waypoints for markers
+      setAllWaypoints(waypointsList);
+
+      // Get the route with all waypoints
+      await getRoute(waypointsList);
+      setRouteReady(true);
+    }
+
+    setIsLoadingRoute(false);
+  };
 
   return (
     <div className="min-h-screen">
@@ -458,7 +463,11 @@ export default function Home() {
                         <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Skąd</label>
                         <PlaceAutocomplete
                           value={formData.fromCity}
-                          onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
+                          onChange={(value) => {
+                            setFormData((prev) => ({ ...prev, fromCity: value }));
+                            setRouteReady(false);
+                          }}
+                          onSelect={updateRoute}
                           placeholder="Miejsce wyjazdu"
                           name="fromCity"
                           icon={
@@ -480,7 +489,11 @@ export default function Home() {
                             <div className="flex-1">
                               <PlaceAutocomplete
                                 value={stop}
-                                onChange={(value) => updateStop(index, value)}
+                                onChange={(value) => {
+                                  updateStop(index, value);
+                                  setRouteReady(false);
+                                }}
+                                onSelect={updateRoute}
                                 placeholder="Przystanek pośredni"
                                 name={`stop-${index}`}
                                 icon={
@@ -522,7 +535,11 @@ export default function Home() {
                         <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
                         <PlaceAutocomplete
                           value={formData.toCity}
-                          onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
+                          onChange={(value) => {
+                            setFormData((prev) => ({ ...prev, toCity: value }));
+                            setRouteReady(false);
+                          }}
+                          onSelect={updateRoute}
                           placeholder="Miejsce docelowe"
                           name="toCity"
                           icon={
@@ -557,7 +574,7 @@ export default function Home() {
                         </div>
                       ) : null}
 
-                      {mapMounted && routeCoordinates.from && routeCoordinates.to && routePath.length > 0 && !isLoadingRoute && areAllStopsFilled() ? (
+                      {mapMounted && routeReady && routePath.length > 0 && routeCoordinates.from && routeCoordinates.to ? (
                         <MapContainer
                           center={[
                             (routeCoordinates.from.lat + routeCoordinates.to.lat) / 2,

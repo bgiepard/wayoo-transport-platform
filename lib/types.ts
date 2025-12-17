@@ -10,6 +10,8 @@ export interface User {
   phone: string;
   role: UserRole;
   avatar?: string;
+  emailVerified?: boolean;
+  phoneVerified?: boolean;
 }
 
 export interface Location {

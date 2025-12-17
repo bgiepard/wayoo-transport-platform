@@ -10,6 +10,8 @@ export const users: User[] = [
     lastName: 'Kowalski',
     phone: '+48 123 456 789',
     role: 'passenger',
+    emailVerified: true,
+    phoneVerified: false,
   },
   {
     id: '2',
@@ -18,6 +20,8 @@ export const users: User[] = [
     lastName: 'Nowak',
     phone: '+48 987 654 321',
     role: 'passenger',
+    emailVerified: false,
+    phoneVerified: false,
   },
   {
     id: '3',
@@ -26,6 +30,8 @@ export const users: User[] = [
     lastName: 'Wiśniewski',
     phone: '+48 555 123 456',
     role: 'carrier',
+    emailVerified: true,
+    phoneVerified: true,
   },
   {
     id: '4',
@@ -34,6 +40,8 @@ export const users: User[] = [
     lastName: 'Zieliński',
     phone: '+48 555 789 012',
     role: 'carrier',
+    emailVerified: true,
+    phoneVerified: false,
   },
   {
     id: '5',
@@ -42,6 +50,8 @@ export const users: User[] = [
     lastName: 'Kowalczyk',
     phone: '+48 555 345 678',
     role: 'carrier',
+    emailVerified: false,
+    phoneVerified: true,
   },
 ];
 

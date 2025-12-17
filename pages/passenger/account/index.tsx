@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/router';
+import VerificationStatus from '@/components/VerificationStatus';
+import VerificationCodeInput from '@/components/VerificationCodeInput';
 
 type TabType = 'profile' | 'password' | 'notifications';
 
@@ -13,6 +15,29 @@ export default function PassengerAccountPage() {
   const [profileData, setProfileData] = useState({
     firstName: currentUser?.firstName || '',
     lastName: currentUser?.lastName || '',
+    email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
+  });
+
+  // State weryfikacji
+  const [verificationStatus, setVerificationStatus] = useState({
+    emailVerified: currentUser?.emailVerified || false,
+    phoneVerified: currentUser?.phoneVerified || false,
+  });
+
+  // State procesu weryfikacji
+  const [verificationProcess, setVerificationProcess] = useState<{
+    active: boolean;
+    type: 'email' | 'phone' | null;
+    originalValue: string;
+  }>({
+    active: false,
+    type: null,
+    originalValue: '',
+  });
+
+  // Oryginalne wartości (do wykrywania zmian)
+  const [originalProfileData] = useState({
     email: currentUser?.email || '',
     phone: currentUser?.phone || '',
   });
@@ -51,6 +76,58 @@ export default function PassengerAccountPage() {
   const handleNotificationsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert('Ustawienia powiadomień zostały zapisane! (Demo)');
+  };
+
+  // Funkcje weryfikacji
+  const handleRequestVerificationCode = (type: 'email' | 'phone') => {
+    setVerificationProcess({
+      active: true,
+      type,
+      originalValue: type === 'email' ? profileData.email : profileData.phone,
+    });
+    alert(`Kod weryfikacyjny został wysłany na ${type === 'email' ? 'email' : 'telefon'}! (Demo: kod to 1234)`);
+  };
+
+  const handleVerifyCode = (code: string) => {
+    if (code === '1234') {
+      // Sukces weryfikacji
+      if (verificationProcess.type === 'email') {
+        setVerificationStatus(prev => ({ ...prev, emailVerified: true }));
+        alert('Email został pomyślnie zweryfikowany!');
+      } else if (verificationProcess.type === 'phone') {
+        setVerificationStatus(prev => ({ ...prev, phoneVerified: true }));
+        alert('Telefon został pomyślnie zweryfikowany!');
+      }
+      setVerificationProcess({ active: false, type: null, originalValue: '' });
+    } else {
+      alert('Nieprawidłowy kod! Spróbuj ponownie.');
+    }
+  };
+
+  const handleCancelVerification = () => {
+    setVerificationProcess({ active: false, type: null, originalValue: '' });
+  };
+
+  const handleEmailChange = (newEmail: string) => {
+    setProfileData(prev => ({ ...prev, email: newEmail }));
+
+    if (newEmail !== originalProfileData.email && verificationStatus.emailVerified) {
+      setVerificationStatus(prev => ({ ...prev, emailVerified: false }));
+    }
+    if (newEmail === originalProfileData.email && currentUser?.emailVerified) {
+      setVerificationStatus(prev => ({ ...prev, emailVerified: true }));
+    }
+  };
+
+  const handlePhoneChange = (newPhone: string) => {
+    setProfileData(prev => ({ ...prev, phone: newPhone }));
+
+    if (newPhone !== originalProfileData.phone && verificationStatus.phoneVerified) {
+      setVerificationStatus(prev => ({ ...prev, phoneVerified: false }));
+    }
+    if (newPhone === originalProfileData.phone && currentUser?.phoneVerified) {
+      setVerificationStatus(prev => ({ ...prev, phoneVerified: true }));
+    }
   };
 
   const handleLogout = () => {
@@ -158,11 +235,23 @@ export default function PassengerAccountPage() {
                       type="email"
                       required
                       value={profileData.email}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({ ...prev, email: e.target.value }))
-                      }
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      disabled={verificationStatus.emailVerified}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600"
                     />
+
+                    <VerificationStatus
+                      verified={verificationStatus.emailVerified}
+                      onRequestCode={() => handleRequestVerificationCode('email')}
+                    />
+
+                    {verificationProcess.active && verificationProcess.type === 'email' && (
+                      <VerificationCodeInput
+                        type="email"
+                        onVerify={handleVerifyCode}
+                        onCancel={handleCancelVerification}
+                      />
+                    )}
                   </div>
 
                   <div>
@@ -173,12 +262,24 @@ export default function PassengerAccountPage() {
                       type="tel"
                       required
                       value={profileData.phone}
-                      onChange={(e) =>
-                        setProfileData((prev) => ({ ...prev, phone: e.target.value }))
-                      }
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      disabled={verificationStatus.phoneVerified}
                       placeholder="+48 XXX XXX XXX"
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-600"
                     />
+
+                    <VerificationStatus
+                      verified={verificationStatus.phoneVerified}
+                      onRequestCode={() => handleRequestVerificationCode('phone')}
+                    />
+
+                    {verificationProcess.active && verificationProcess.type === 'phone' && (
+                      <VerificationCodeInput
+                        type="phone"
+                        onVerify={handleVerifyCode}
+                        onCancel={handleCancelVerification}
+                      />
+                    )}
                   </div>
 
                   <div className="pt-4">

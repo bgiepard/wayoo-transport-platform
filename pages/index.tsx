@@ -4,12 +4,100 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/lib/auth-context';
 import PlaceAutocomplete from '@/components/PlaceAutocomplete';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+
+// Dynamically import map components to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Polyline = dynamic(
+  () => import('react-leaflet').then((mod) => mod.Polyline),
+  { ssr: false }
+);
+
+// Fix Leaflet default marker icons
+if (typeof window !== 'undefined') {
+  const L = require('leaflet');
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  });
+}
 
 export default function Home() {
   const { isPassenger, isCarrier } = useAuth();
   const router = useRouter();
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
+  const [showRouteModal, setShowRouteModal] = useState(false);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [routeCoordinates, setRouteCoordinates] = useState<{
+    from?: { lat: number; lng: number };
+    to?: { lat: number; lng: number };
+  }>({});
+  const [routePath, setRoutePath] = useState<[number, number][]>([]);
+  const [allWaypoints, setAllWaypoints] = useState<{ lat: number; lng: number }[]>([]);
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+
+  // Helper function to extract city name from full address
+  const extractCityName = (address: string): string => {
+    if (!address) return '';
+    // Get the first part before comma (usually the city name)
+    const cityName = address.split(',')[0].trim();
+    return cityName;
+  };
+
+  // Add a new stop
+  const addStop = () => {
+    setFormData((prev) => ({
+      ...prev,
+      stops: [...prev.stops, ''],
+    }));
+  };
+
+  // Remove a stop by index
+  const removeStop = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      stops: prev.stops.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Update a stop by index
+  const updateStop = (index: number, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      stops: prev.stops.map((stop, i) => (i === index ? value : stop)),
+    }));
+  };
+
+  // Get route display text
+  const getRouteDisplayText = (): string => {
+    const parts: string[] = [];
+    if (formData.fromCity) parts.push(extractCityName(formData.fromCity));
+    formData.stops.forEach((stop) => {
+      if (stop) parts.push(extractCityName(stop));
+    });
+    if (formData.toCity) parts.push(extractCityName(formData.toCity));
+    return parts.join(' → ');
+  };
+
+  // Check if all stops are filled
+  const areAllStopsFilled = (): boolean => {
+    return formData.stops.every((stop) => stop !== '');
+  };
 
   // Ustaw domyślną datę na jutro i godzinę na 12:00
   const tomorrow = new Date();
@@ -19,6 +107,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     fromCity: '',
     toCity: '',
+    stops: [] as string[], // Przystanki pośrednie
     passengerCount: '1',
     departureDate: defaultDate,
     departureTime: '12:00',
@@ -46,6 +135,7 @@ export default function Home() {
         city: formData.toCity,
         address: formData.toCity,
       },
+      stops: formData.stops.filter((stop) => stop !== ''), // Przystanki pośrednie (tylko niepuste)
       departureDate: departureDateTime.toISOString(),
       isRoundTrip: false,
       passengerCount: parseInt(formData.passengerCount),
@@ -86,6 +176,124 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Set map mounted
+  useEffect(() => {
+    setMapMounted(true);
+  }, []);
+
+  // Geocode cities to get coordinates when they change
+  useEffect(() => {
+    const geocodeCity = async (city: string): Promise<{ lat: number; lng: number } | null> => {
+      try {
+        const response = await fetch(
+          `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(city)}&apiKey=11da404667ca45a78db6a73c3b6be0d9`
+        );
+        const data = await response.json();
+        if (data.features && data.features.length > 0) {
+          const [lng, lat] = data.features[0].geometry.coordinates;
+          return { lat, lng };
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+      }
+      return null;
+    };
+
+    const getRoute = async (waypoints: { lat: number; lng: number }[]) => {
+      if (waypoints.length < 2) return;
+
+      try {
+        // Build waypoints string for API: "lat1,lng1|lat2,lng2|lat3,lng3"
+        const waypointsStr = waypoints.map((wp) => `${wp.lat},${wp.lng}`).join('|');
+
+        const response = await fetch(
+          `https://api.geoapify.com/v1/routing?waypoints=${waypointsStr}&mode=drive&apiKey=11da404667ca45a78db6a73c3b6be0d9`
+        );
+        const data = await response.json();
+
+        if (data.features && data.features.length > 0) {
+          const geometry = data.features[0].geometry;
+          let allCoordinates: [number, number][] = [];
+
+          // Handle both LineString and MultiLineString
+          if (geometry.type === 'LineString') {
+            allCoordinates = geometry.coordinates;
+          } else if (geometry.type === 'MultiLineString') {
+            // Flatten all segments into one array
+            allCoordinates = geometry.coordinates.flat();
+          }
+
+          // Convert from [lng, lat] to [lat, lng] for Leaflet
+          const routePoints: [number, number][] = allCoordinates.map((coord: [number, number]) => [coord[1], coord[0]]);
+          setRoutePath(routePoints);
+        }
+      } catch (error) {
+        console.error('Routing error:', error);
+        // Fallback to straight lines if routing fails
+        const fallbackPath: [number, number][] = waypoints.map((wp) => [wp.lat, wp.lng]);
+        setRoutePath(fallbackPath);
+      }
+    };
+
+    const updateCoordinates = async () => {
+      // Check if all stops are filled before proceeding
+      const allStopsFilled = formData.stops.every((stop) => stop !== '');
+
+      // If there are empty stops, clear the route
+      if (!allStopsFilled && formData.stops.length > 0) {
+        setAllWaypoints([]);
+        setRoutePath([]);
+        setIsLoadingRoute(false);
+        return;
+      }
+
+      setIsLoadingRoute(true);
+      const newCoords: { from?: { lat: number; lng: number }; to?: { lat: number; lng: number } } = {};
+
+      if (formData.fromCity) {
+        const fromCoords = await geocodeCity(formData.fromCity);
+        if (fromCoords) newCoords.from = fromCoords;
+      }
+
+      if (formData.toCity) {
+        const toCoords = await geocodeCity(formData.toCity);
+        if (toCoords) newCoords.to = toCoords;
+      }
+
+      setRouteCoordinates(newCoords);
+
+      // Build complete waypoints list including stops
+      if (newCoords.from && newCoords.to) {
+        const waypointsList: { lat: number; lng: number }[] = [newCoords.from];
+
+        // Add stops coordinates
+        for (const stop of formData.stops) {
+          if (stop) {
+            const stopCoords = await geocodeCity(stop);
+            if (stopCoords) waypointsList.push(stopCoords);
+          }
+        }
+
+        waypointsList.push(newCoords.to);
+
+        // Save all waypoints for markers
+        setAllWaypoints(waypointsList);
+
+        // Get the route with all waypoints
+        await getRoute(waypointsList);
+      }
+
+      setIsLoadingRoute(false);
+    };
+
+    if (formData.fromCity || formData.toCity || formData.stops.length > 0) {
+      updateCoordinates();
+    } else {
+      setAllWaypoints([]);
+      setRoutePath([]);
+    }
+  }, [formData.fromCity, formData.toCity, formData.stops]);
+
   return (
     <div className="min-h-screen">
         {/* Hero Section with Background */}
@@ -108,44 +316,32 @@ export default function Home() {
             </div>
 
             {/* Search Form - Kompaktowy Layout */}
-            <div className="mx-auto mt-12 px-4" style={{ maxWidth: '1382px' }}>
-              <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 z-2 relative">
-                {/* 5 Kolumn */}
-                <div className="grid grid-cols-1 gap-6 items-end" style={{ gridTemplateColumns: '1fr 1fr 1fr 0.66fr 1fr' }}>
-                  {/* Kolumna 1 - Skąd */}
+            <div className="mx-auto mt-12 px-4 relative" style={{ maxWidth: '1382px' }}>
+              <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 relative" style={{ zIndex: 1 }}>
+                {/* 4 Kolumny */}
+                <div className="grid grid-cols-1 gap-6 items-end" style={{ gridTemplateColumns: '2fr 1fr 0.66fr 1fr' }}>
+                  {/* Kolumna 1 - Trasa (połączone Skąd i Dokąd) */}
                   <div>
-                    <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Skąd</label>
-                    <PlaceAutocomplete
-                      value={formData.fromCity}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
-                      placeholder="Miejsce wyjazdu"
-                      name="fromCity"
-                      icon={
+                    <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Trasa</label>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ffc428] z-10 pointer-events-none">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
-                      }
-                    />
+                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        value={getRouteDisplayText()}
+                        onClick={() => setShowRouteModal(true)}
+                        className="w-full pl-11 pr-4 py-3.5 text-base border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#ffc428] focus:border-[#ffc428] transition-all cursor-pointer"
+                        placeholder="Wybierz trasę"
+                      />
+                    </div>
                   </div>
 
-                  {/* Kolumna 2 - Dokąd */}
-                  <div>
-                    <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
-                    <PlaceAutocomplete
-                      value={formData.toCity}
-                      onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
-                      placeholder="Miejsce docelowe"
-                      name="toCity"
-                      icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                        </svg>
-                      }
-                    />
-                  </div>
-
-                  {/* Kolumna 3 - Data i godzina */}
+                  {/* Kolumna 2 - Data i godzina */}
                   <div>
                     <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Data i godzina</label>
                     <div className="relative" ref={dateTimePickerRef}>
@@ -204,7 +400,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Kolumna 4 - Liczba pasażerów */}
+                  {/* Kolumna 3 - Liczba pasażerów */}
                   <div>
                     <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Pasażerowie</label>
                     <input
@@ -219,7 +415,7 @@ export default function Home() {
                     />
                   </div>
 
-                  {/* Kolumna 5 - Przycisk Submit */}
+                  {/* Kolumna 4 - Przycisk Submit */}
                   <div>
                     <button
                       type="submit"
@@ -234,6 +430,171 @@ export default function Home() {
                 </div>
               </form>
             </div>
+
+            {/* Modal wyboru trasy */}
+            {showRouteModal && (
+              <div className="absolute left-0 right-0 top-0 z-50">
+                <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-200 p-6 w-full">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-bold text-[#215387]">Wybierz trasę</h3>
+                    <button
+                      onClick={() => setShowRouteModal(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Dwukolumnowy layout - po lewej inputy, po prawej mapa */}
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Lewa kolumna - Inputy */}
+                    <div className="space-y-4">
+                      {/* Skąd */}
+                      <div>
+                        <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Skąd</label>
+                        <PlaceAutocomplete
+                          value={formData.fromCity}
+                          onChange={(value) => setFormData((prev) => ({ ...prev, fromCity: value }))}
+                          placeholder="Miejsce wyjazdu"
+                          name="fromCity"
+                          icon={
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          }
+                        />
+                      </div>
+
+                      {/* Przystanki pośrednie */}
+                      {formData.stops.map((stop, index) => (
+                        <div key={index} className="relative">
+                          <label className="block text-left text-sm font-semibold text-[#215387] mb-2">
+                            Przystanek {index + 1}
+                          </label>
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <PlaceAutocomplete
+                                value={stop}
+                                onChange={(value) => updateStop(index, value)}
+                                placeholder="Przystanek pośredni"
+                                name={`stop-${index}`}
+                                icon={
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                }
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeStop(index)}
+                              className="px-3 py-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors"
+                              title="Usuń przystanek"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Przycisk Dodaj przystanek */}
+                      <button
+                        type="button"
+                        onClick={addStop}
+                        className="px-2 py-1 text-[#215387] hover:text-[#1a4469] transition-colors text-sm font-medium flex items-center gap-1.5"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Dodaj przystanek
+                      </button>
+
+                      {/* Dokąd */}
+                      <div>
+                        <label className="block text-left text-sm font-semibold text-[#215387] mb-2">Dokąd</label>
+                        <PlaceAutocomplete
+                          value={formData.toCity}
+                          onChange={(value) => setFormData((prev) => ({ ...prev, toCity: value }))}
+                          placeholder="Miejsce docelowe"
+                          name="toCity"
+                          icon={
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                          }
+                        />
+                      </div>
+
+                      {/* Przycisk Zapisz */}
+                      <button
+                        type="button"
+                        onClick={() => setShowRouteModal(false)}
+                        className="w-full px-6 py-3 bg-[#ffc428] text-[#215387] rounded-xl hover:bg-[#f5b920] transition-all font-bold shadow-lg hover:shadow-xl"
+                      >
+                        Zapisz
+                      </button>
+                    </div>
+
+                    {/* Prawa kolumna - Mapa */}
+                    <div className="bg-gray-100 rounded-xl overflow-hidden relative" style={{ minHeight: '300px' }}>
+                      {isLoadingRoute ? (
+                        <div className="flex items-center justify-center h-full text-gray-400 absolute inset-0 bg-gray-100 z-10">
+                          <div className="text-center">
+                            <svg className="w-12 h-12 mx-auto mb-3 animate-spin text-[#215387]" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p className="text-sm text-[#215387] font-medium">Ładowanie trasy...</p>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {mapMounted && routeCoordinates.from && routeCoordinates.to && routePath.length > 0 && !isLoadingRoute && areAllStopsFilled() ? (
+                        <MapContainer
+                          center={[
+                            (routeCoordinates.from.lat + routeCoordinates.to.lat) / 2,
+                            (routeCoordinates.from.lng + routeCoordinates.to.lng) / 2,
+                          ]}
+                          zoom={7}
+                          style={{ height: '100%', width: '100%', minHeight: '300px' }}
+                          scrollWheelZoom={false}
+                        >
+                          <TileLayer
+                            attribution='&copy; <a href="https://www.geoapify.com/">Geoapify</a>'
+                            url="https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=11da404667ca45a78db6a73c3b6be0d9"
+                          />
+                          {/* Markery dla wszystkich waypoints */}
+                          {allWaypoints.map((waypoint, index) => (
+                            <Marker key={index} position={[waypoint.lat, waypoint.lng]} />
+                          ))}
+                          <Polyline
+                            positions={routePath}
+                            color="#215387"
+                            weight={4}
+                            opacity={0.8}
+                          />
+                        </MapContainer>
+                      ) : !isLoadingRoute ? (
+                        <div className="flex items-center justify-center h-full text-gray-400">
+                          <div className="text-center">
+                            <svg className="w-16 h-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                            </svg>
+                            <p className="text-sm">Wybierz miejsca, aby zobaczyć trasę</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

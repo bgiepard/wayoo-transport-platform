@@ -50,7 +50,16 @@ export default function PassengerRequestsPage() {
     }).format(date);
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, expired: boolean = false) => {
+    // Jeśli wygasło, pokaż pastylkę "Wygasło"
+    if (expired && status === 'active') {
+      return (
+        <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-200 text-gray-600">
+          Wygasło
+        </span>
+      );
+    }
+
     const styles = {
       active: 'bg-green-100 text-green-800',
       offers_received: 'bg-blue-100 text-blue-800',
@@ -335,60 +344,78 @@ export default function PassengerRequestsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Show all requests except the first one (which is shown above in progress section) */}
-          {myRequests.slice(1).map((request) => {
+          {myRequests.slice(1).sort((a, b) => {
+            const offersA = getOffersByRequestId(a.id).length;
+            const offersB = getOffersByRequestId(b.id).length;
+            // Sortuj malejąco po liczbie ofert (więcej ofert = wyżej)
+            return offersB - offersA;
+          }).map((request) => {
             const offers = getOffersByRequestId(request.id);
             const hasNewOffers = offers.filter(o => o.status === 'pending').length > 0;
+            const timeRemaining = getTimeRemaining(request.createdAt);
+            const isExpired = timeRemaining.expired;
 
             return (
-              <div key={request.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden border border-gray-100">
+              <div key={request.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden border border-gray-100">
                 {/* Header with status badge */}
-                <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] px-6 py-4 flex justify-between items-center">
+                <div className={`${isExpired ? 'bg-gradient-to-r from-gray-400 to-gray-500' : 'bg-gradient-to-r from-[#215387] to-[#1a4469]'} px-4 py-2 flex justify-between items-center`}>
                   <div className="flex items-center gap-3">
-                    {getStatusBadge(request.status)}
-                    <span className="text-white/80 text-sm">
+                    {getStatusBadge(request.status, isExpired)}
+                    <span className="text-white/80 text-xs">
                       Utworzono: {formatDate(request.createdAt).split(',')[0]}
                     </span>
                   </div>
-                  {hasNewOffers && (
-                    <span className="bg-[#ffc428] text-[#215387] px-3 py-1 rounded-full text-xs font-bold animate-pulse">
-                      Nowe oferty!
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {hasNewOffers && !isExpired && (
+                      <span className="bg-[#ffc428] text-[#215387] px-2 py-1 rounded-full text-xs font-bold animate-pulse">
+                        Nowe oferty!
+                      </span>
+                    )}
+                    <button
+                      className="px-2 py-1 border border-white/30 text-white rounded-lg hover:bg-white/10 transition-colors flex items-center gap-1 text-xs"
+                      onClick={() => alert('Anulowanie - Demo')}
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Anuluj
+                    </button>
+                  </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4">
                   {/* Route with arrow */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-4 mb-3">
+                  <div className="mb-4">
+                    <div className="flex items-center gap-3 mb-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-[#ffc428] rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-[#ffc428] rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm text-gray-500 font-medium">Skąd</p>
-                            <p className="text-2xl font-bold text-gray-900">{request.from.city}</p>
+                            <p className="text-xs text-gray-500 font-medium">Skąd</p>
+                            <p className="text-lg font-bold text-gray-900">{request.from.city}</p>
                             {request.from.address && request.from.address !== request.from.city && (
-                              <p className="text-sm text-gray-600">{request.from.address}</p>
+                              <p className="text-xs text-gray-600">{request.from.address}</p>
                             )}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center px-4 gap-2">
-                        <svg className="w-8 h-8 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="flex flex-col items-center justify-center px-2 gap-1">
+                        <svg className="w-6 h-6 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                         {(() => {
                           const distance = calculateDistance(request.from, request.to);
                           if (distance) {
                             return (
-                              <div className="bg-[#ffc428] text-[#215387] px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
+                              <div className="bg-[#ffc428] text-[#215387] px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap">
                                 {distance} km
                               </div>
                             );
@@ -398,18 +425,18 @@ export default function PassengerRequestsPage() {
                       </div>
 
                       <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm text-gray-500 font-medium">Dokąd</p>
-                            <p className="text-2xl font-bold text-gray-900">{request.to.city}</p>
+                            <p className="text-xs text-gray-500 font-medium">Dokąd</p>
+                            <p className="text-lg font-bold text-gray-900">{request.to.city}</p>
                             {request.to.address && request.to.address !== request.to.city && (
-                              <p className="text-sm text-gray-600">{request.to.address}</p>
+                              <p className="text-xs text-gray-600">{request.to.address}</p>
                             )}
                           </div>
                         </div>
@@ -418,59 +445,46 @@ export default function PassengerRequestsPage() {
                   </div>
 
                   {/* Details grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    {/* Data wyjazdu */}
+                    <div className="bg-blue-50 rounded-lg p-2">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span className="text-xs text-blue-600 font-medium">Data wyjazdu</span>
                       </div>
-                      <p className="text-sm font-bold text-gray-900">{formatDate(request.departureDate).split(',')[0]}</p>
+                      <p className="text-xs font-bold text-gray-900">{formatDate(request.departureDate).split(',')[0]}</p>
                       <p className="text-xs text-gray-600">{formatDate(request.departureDate).split(',')[1]}</p>
                     </div>
 
-                    <div className="bg-purple-50 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {/* Pasażerowie */}
+                    <div className="bg-purple-50 rounded-lg p-2">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                         <span className="text-xs text-purple-600 font-medium">Pasażerowie</span>
                       </div>
-                      <p className="text-sm font-bold text-gray-900">{request.passengerCount} osób</p>
+                      <p className="text-xs font-bold text-gray-900">{request.passengerCount} osób</p>
                     </div>
 
-                    {request.isRoundTrip && (
-                      <div className="bg-amber-50 rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                          </svg>
-                          <span className="text-xs text-amber-600 font-medium">Typ</span>
-                        </div>
-                        <p className="text-sm font-bold text-gray-900">Powrót</p>
-                        {request.returnDate && (
-                          <p className="text-xs text-gray-600">{formatDate(request.returnDate).split(',')[0]}</p>
-                        )}
-                      </div>
-                    )}
-
+                    {/* Czas oferty */}
                     {(() => {
-                      const timeRemaining = getTimeRemaining(request.createdAt);
                       const colors = getTimeColor(timeRemaining.hours, timeRemaining.expired);
 
                       return (
-                        <div className={`${colors.bg} rounded-lg p-4 border-2 ${colors.border}`}>
-                          <div className="flex items-center gap-2 mb-1">
-                            <svg className={`w-5 h-5 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className={`${colors.bg} rounded-lg p-2 border ${colors.border}`}>
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <svg className={`w-4 h-4 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span className={`text-xs ${colors.text} font-medium`}>Czas oferty</span>
                           </div>
                           {timeRemaining.expired ? (
-                            <p className={`text-lg font-bold ${colors.text}`}>Wygasło</p>
+                            <p className={`text-sm font-bold ${colors.text}`}>Wygasło</p>
                           ) : (
-                            <p className={`text-2xl font-bold ${colors.text}`}>
+                            <p className={`text-base font-bold ${colors.text}`}>
                               {timeRemaining.hours}h {timeRemaining.minutes}m
                             </p>
                           )}
@@ -478,63 +492,53 @@ export default function PassengerRequestsPage() {
                       );
                     })()}
 
-                    {/* Wymagania specjalne */}
-                    {request.specialRequirements && (
-                      <div className="bg-indigo-50 rounded-lg p-4 border-2 border-indigo-200">
-                        <div className="flex items-center gap-2 mb-1">
-                          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {/* Zobacz oferty - kafelek */}
+                    <Link
+                      href={`/passenger/requests/${request.id}`}
+                      className={`rounded-lg p-2 transition-all cursor-pointer group ${
+                        offers.length > 0
+                          ? 'bg-green-600 hover:bg-green-700'
+                          : 'bg-yellow-50 hover:bg-yellow-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <svg className={`w-4 h-4 ${offers.length > 0 ? 'text-white' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span className={`text-xs font-medium ${offers.length > 0 ? 'text-white' : 'text-gray-500'}`}>Oferty</span>
+                      </div>
+                      <p className={`text-base font-bold group-hover:scale-105 transition-transform ${offers.length > 0 ? 'text-white' : 'text-gray-400'}`}>{offers.length}</p>
+                      <p className={`text-xs ${offers.length > 0 ? 'text-white' : 'text-gray-500'}`}>Zobacz</p>
+                    </Link>
+                  </div>
+
+                  {/* Wymagania specjalne */}
+                  {request.specialRequirements && (
+                    <div>
+                      <div className="bg-indigo-50 rounded-lg p-2 border border-indigo-200">
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                           </svg>
                           <span className="text-xs text-indigo-600 font-medium">Wymagania specjalne</span>
                         </div>
                         <div>
-                          <p className={`text-sm text-gray-700 ${!expandedRequirements.has(request.id) ? 'line-clamp-2' : ''}`}>
+                          <p className={`text-xs text-gray-700 ${!expandedRequirements.has(request.id) ? 'line-clamp-2' : ''}`}>
                             {request.specialRequirements}
                           </p>
                           {request.specialRequirements.length > 80 && (
                             <button
                               onClick={() => toggleRequirements(request.id)}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-1"
+                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium mt-0.5"
                             >
                               {expandedRequirements.has(request.id) ? '▲ Zwiń' : '▼ Rozwiń'}
                             </button>
                           )}
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-4 border-t">
-                    <Link
-                      href={`/passenger/requests/${request.id}`}
-                      className="flex-1 text-center bg-[#ffc428] text-[#215387] py-3 px-6 rounded-lg hover:bg-[#f5b920] transition-all font-bold shadow-md hover:shadow-lg hover:scale-105 flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      Zobacz oferty ({offers.length})
-                    </Link>
-                    <button
-                      className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-                      onClick={() => alert('Edycja - Demo')}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      <span className="hidden md:inline">Edytuj</span>
-                    </button>
-                    <button
-                      className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
-                      onClick={() => alert('Anulowanie - Demo')}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      <span className="hidden md:inline">Anuluj</span>
-                    </button>
-                  </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

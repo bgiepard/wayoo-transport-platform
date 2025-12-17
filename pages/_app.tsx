@@ -1,25 +1,53 @@
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import '@/app/globals.css';
-import { AuthProvider } from '@/lib/auth-context';
-import DriverLayout from '@/components/layouts/DriverLayout';
-import PassengerLayout from '@/components/layouts/PassengerLayout';
 import PasswordModal from '@/components/PasswordModal';
+
+const AuthProvider = dynamic(
+  () => import('@/lib/auth-context').then((mod) => mod.AuthProvider),
+  { ssr: false }
+);
+
+const DriverLayout = dynamic(
+  () => import('@/components/layouts/DriverLayout'),
+  { ssr: false }
+);
+
+const PassengerLayout = dynamic(
+  () => import('@/components/layouts/PassengerLayout'),
+  { ssr: false }
+);
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [currentPath, setCurrentPath] = useState('');
 
   useEffect(() => {
     // Sprawdź czy użytkownik jest już autoryzowany
-    const authorized = localStorage.getItem('wayoo_authorized');
-    if (authorized === 'true') {
-      setIsAuthorized(true);
+    if (typeof window !== 'undefined') {
+      const authorized = localStorage.getItem('wayoo_authorized');
+      if (authorized === 'true') {
+        setIsAuthorized(true);
+      }
+      // Set current path from window.location
+      setCurrentPath(window.location.pathname);
     }
     setIsLoading(false);
+  }, []);
+
+  // Update path on navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleRouteChange = () => {
+        setCurrentPath(window.location.pathname);
+      };
+
+      window.addEventListener('popstate', handleRouteChange);
+      return () => window.removeEventListener('popstate', handleRouteChange);
+    }
   }, []);
 
   const handlePasswordSuccess = () => {
@@ -32,7 +60,7 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   // Determine which layout to use based on the path
-  const isDriverPanel = router.pathname.startsWith('/driver');
+  const isDriverPanel = currentPath.startsWith('/driver');
   const Layout = isDriverPanel ? DriverLayout : PassengerLayout;
 
   return (

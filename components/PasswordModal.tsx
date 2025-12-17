@@ -14,7 +14,9 @@ export default function PasswordModal({ onSuccess }: PasswordModalProps) {
 
     if (password === 'Wayoo!2025') {
       // Zapisz autoryzację w localStorage
-      localStorage.setItem('wayoo_authorized', 'true');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('wayoo_authorized', 'true');
+      }
       onSuccess();
     } else {
       setError('Nieprawidłowe hasło');

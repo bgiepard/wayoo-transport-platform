@@ -4,14 +4,20 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { getCarrierByUserId, offers } from '@/lib/data';
-import { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
 
 export default function DriverNavigation() {
   const { currentUser } = useAuth();
   const carrier = currentUser ? getCarrierByUserId(currentUser.id) : null;
-  const router = useRouter();
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [currentPath, setCurrentPath] = useState('');
+
+  // Update current path from window.location
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentPath(window.location.pathname);
+    }
+  }, []);
 
   // Count pending offers for driver
   const getPendingOffersCount = () => {
@@ -22,7 +28,7 @@ export default function DriverNavigation() {
   const pendingOffersCount = getPendingOffersCount();
 
   const isActive = (path: string) => {
-    return router.pathname === path || router.pathname.startsWith(path + '/');
+    return currentPath === path || currentPath.startsWith(path + '/');
   };
 
   return (
@@ -51,7 +57,7 @@ export default function DriverNavigation() {
             <Link
               href="/driver"
               className={`font-medium transition-colors flex items-center gap-2 ${
-                isActive('/driver') && router.pathname === '/driver'
+                isActive('/driver') && currentPath === '/driver'
                   ? 'text-[#ffc428]'
                   : 'text-white hover:text-[#ffc428]'
               }`}

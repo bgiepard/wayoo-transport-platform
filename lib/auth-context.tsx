@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/router';
 import { User } from './types';
 import { users } from './data';
 
@@ -15,15 +14,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Poczekaj aż router będzie gotowy
-    if (!router.isReady) return;
+    // Only run on client side
+    if (typeof window === 'undefined') return;
 
     // Automatyczne ustawienie użytkownika na podstawie ścieżki URL
-    const path = router.pathname;
+    const path = window.location.pathname;
 
     if (path.startsWith('/driver')) {
       // Panel przewoźnika - ustaw przewoźnika (Michał Wiśniewski - id: 3)
@@ -34,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const passenger = users.find((u) => u.id === '1' && u.role === 'passenger');
       setCurrentUser(passenger || null);
     }
-  }, [router.isReady, router.pathname]);
+  }, []);
 
   const isPassenger = currentUser?.role === 'passenger';
   const isCarrier = currentUser?.role === 'carrier';

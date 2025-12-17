@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { transportRequests, getOffersByRequestId } from '@/lib/data';
 import type { Location } from '@/lib/types';
@@ -21,16 +21,18 @@ export default function PassengerRequestsPage() {
 
   // Load requests from localStorage on mount
   useEffect(() => {
-    const savedRequests = JSON.parse(localStorage.getItem('transportRequests') || '[]');
-    // Convert date strings back to Date objects and merge with static data
-    const parsedRequests = savedRequests.map((req: any) => ({
-      ...req,
-      departureDate: new Date(req.departureDate),
-      returnDate: req.returnDate ? new Date(req.returnDate) : undefined,
-      createdAt: new Date(req.createdAt),
-      updatedAt: new Date(req.updatedAt),
-    }));
-    setAllRequests([...parsedRequests, ...transportRequests]);
+    if (typeof window !== 'undefined') {
+      const savedRequests = JSON.parse(localStorage.getItem('transportRequests') || '[]');
+      // Convert date strings back to Date objects and merge with static data
+      const parsedRequests = savedRequests.map((req: any) => ({
+        ...req,
+        departureDate: new Date(req.departureDate),
+        returnDate: req.returnDate ? new Date(req.returnDate) : undefined,
+        createdAt: new Date(req.createdAt),
+        updatedAt: new Date(req.updatedAt),
+      }));
+      setAllRequests([...parsedRequests, ...transportRequests]);
+    }
   }, []);
 
   // Filter requests for current user and sort by newest

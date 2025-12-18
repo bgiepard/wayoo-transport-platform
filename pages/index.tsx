@@ -618,6 +618,157 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Jak to działa? - Flow */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex items-center justify-center gap-4 md:gap-8">
+          {/* Krok 1 */}
+          <div className="text-center flex-1 max-w-[200px]">
+            <div className="relative mx-auto mb-6 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-[#215387]">
+              <div style={{ width: '60px', height: '60px' }}>
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Document/Form */}
+                  <rect x="50" y="30" width="100" height="130" rx="8" fill="#215387"/>
+                  <rect x="45" y="35" width="100" height="130" rx="8" fill="#2E6BA8"/>
+                  {/* Lines on document */}
+                  <line x1="60" y1="55" x2="120" y2="55" stroke="#ffc428" strokeWidth="3" strokeLinecap="round"/>
+                  <line x1="60" y1="70" x2="110" y2="70" stroke="#ffc428" strokeWidth="3" strokeLinecap="round"/>
+                  <line x1="60" y1="85" x2="125" y2="85" stroke="#E8E8E8" strokeWidth="3" strokeLinecap="round"/>
+                  <line x1="60" y1="100" x2="105" y2="100" stroke="#E8E8E8" strokeWidth="3" strokeLinecap="round"/>
+                  {/* Pencil */}
+                  <rect x="110" y="110" width="50" height="8" rx="2" fill="#ffc428" transform="rotate(45 110 110)"/>
+                  <path d="M125 125 L115 135 L120 140 L130 130 Z" fill="#f5b920"/>
+                  <circle cx="132" cy="122" r="4" fill="#E8E8E8"/>
+                </svg>
+              </div>
+            </div>
+            <div className="mb-2 text-sm font-bold text-[#ffc428]">KROK 1</div>
+            <h3 className="text-lg md:text-xl font-bold mb-2 text-[#215387]">Złóż zlecenie</h3>
+            <p className="text-gray-600 text-xs md:text-sm leading-relaxed hidden md:block">
+              Wypełnij formularz z trasą, datą i liczbą pasażerów.
+            </p>
+          </div>
+
+          {/* Strzałka 1 */}
+          <div className="hidden md:block flex-shrink-0">
+            <svg width="60" height="24" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 12 L50 12" stroke="#ffc428" strokeWidth="3" strokeDasharray="6 6"/>
+              <path d="M45 6 L55 12 L45 18" stroke="#ffc428" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Krok 2 */}
+          <div className="text-center flex-1 max-w-[200px]">
+            <div className="relative mx-auto mb-6 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-[#215387]">
+              <div style={{ width: '80px', height: '80px' }}>
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Multiple envelopes/offers */}
+                  <g transform="translate(10, 10)">
+                    {/* Envelope 3 (back) */}
+                    <path d="M90 75 L140 75 L115 95 Z" fill="#9CB4CC"/>
+                    <rect x="75" y="75" width="65" height="45" rx="4" fill="#B8CEDF"/>
+                    {/* Envelope 2 (middle) */}
+                    <path d="M70 60 L120 60 L95 80 Z" fill="#2E6BA8"/>
+                    <rect x="55" y="60" width="65" height="45" rx="4" fill="#4A8FCA"/>
+                    {/* Envelope 1 (front) */}
+                    <path d="M50 45 L100 45 L75 65 Z" fill="#ffc428"/>
+                    <rect x="35" y="45" width="65" height="45" rx="4" fill="#ffd858"/>
+                    <path d="M35 45 L67.5 72.5 L100 45" stroke="#215387" strokeWidth="2" fill="none"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div className="mb-2 text-sm font-bold text-[#ffc428]">KROK 2</div>
+            <h3 className="text-lg md:text-xl font-bold mb-2 text-[#215387]">Dostań oferty</h3>
+            <p className="text-gray-600 text-xs md:text-sm leading-relaxed hidden md:block">
+              Przewoźnicy przesyłają konkurencyjne oferty.
+            </p>
+          </div>
+
+          {/* Strzałka 2 */}
+          <div className="hidden md:block flex-shrink-0">
+            <svg width="60" height="24" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 12 L50 12" stroke="#ffc428" strokeWidth="3" strokeDasharray="6 6"/>
+              <path d="M45 6 L55 12 L45 18" stroke="#ffc428" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Krok 3 */}
+          <div className="text-center flex-1 max-w-[200px]">
+            <div className="relative mx-auto mb-6 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-[#215387]">
+              <div style={{ width: '80px', height: '80px' }}>
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Hand with checkmark */}
+                  <g transform="translate(30, 40)">
+                    {/* Document selected */}
+                    <rect x="20" y="10" width="80" height="100" rx="6" fill="#2E6BA8"/>
+                    <rect x="30" y="25" width="60" height="8" rx="2" fill="#E8E8E8"/>
+                    <rect x="30" y="40" width="50" height="6" rx="2" fill="#E8E8E8"/>
+                    <rect x="30" y="52" width="55" height="6" rx="2" fill="#E8E8E8"/>
+                    {/* Big checkmark */}
+                    <circle cx="60" cy="75" r="25" fill="#ffc428"/>
+                    <path d="M48 75 L55 82 L72 65" stroke="#215387" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div className="mb-2 text-sm font-bold text-[#ffc428]">KROK 3</div>
+            <h3 className="text-lg md:text-xl font-bold mb-2 text-[#215387]">Wybierz ofertę</h3>
+            <p className="text-gray-600 text-xs md:text-sm leading-relaxed hidden md:block">
+              Zaakceptuj najlepszą ofertę dla Ciebie.
+            </p>
+          </div>
+
+          {/* Strzałka 3 */}
+          <div className="hidden md:block flex-shrink-0">
+            <svg width="60" height="24" viewBox="0 0 60 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 12 L50 12" stroke="#ffc428" strokeWidth="3" strokeDasharray="6 6"/>
+              <path d="M45 6 L55 12 L45 18" stroke="#ffc428" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+
+          {/* Krok 4 */}
+          <div className="text-center flex-1 max-w-[200px]">
+            <div className="relative mx-auto mb-6 w-28 h-28 md:w-32 md:h-32 bg-white rounded-full shadow-lg flex items-center justify-center border-4 border-[#215387]">
+              <div style={{ width: '80px', height: '80px' }}>
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Bus/Van */}
+                  <g transform="translate(20, 50)">
+                    {/* Road */}
+                    <rect x="0" y="85" width="160" height="3" fill="#E8E8E8"/>
+                    <rect x="0" y="92" width="20" height="4" fill="#ffc428"/>
+                    <rect x="30" y="92" width="20" height="4" fill="#ffc428"/>
+                    <rect x="60" y="92" width="20" height="4" fill="#ffc428"/>
+                    <rect x="90" y="92" width="20" height="4" fill="#ffc428"/>
+                    <rect x="120" y="92" width="20" height="4" fill="#ffc428"/>
+                    {/* Bus body */}
+                    <rect x="30" y="35" width="90" height="50" rx="8" fill="#215387"/>
+                    {/* Windows */}
+                    <rect x="40" y="42" width="18" height="20" rx="3" fill="#B8CEDF"/>
+                    <rect x="62" y="42" width="18" height="20" rx="3" fill="#B8CEDF"/>
+                    <rect x="84" y="42" width="18" height="20" rx="3" fill="#B8CEDF"/>
+                    <rect x="106" y="42" width="8" height="20" rx="3" fill="#B8CEDF"/>
+                    {/* Wheels */}
+                    <circle cx="50" cy="85" r="10" fill="#2C3E50"/>
+                    <circle cx="50" cy="85" r="6" fill="#E8E8E8"/>
+                    <circle cx="100" cy="85" r="10" fill="#2C3E50"/>
+                    <circle cx="100" cy="85" r="6" fill="#E8E8E8"/>
+                    {/* Motion lines */}
+                    <line x1="10" y1="30" x2="20" y2="30" stroke="#ffc428" strokeWidth="3" strokeLinecap="round"/>
+                    <line x1="5" y1="45" x2="18" y2="45" stroke="#ffc428" strokeWidth="3" strokeLinecap="round"/>
+                    <line x1="8" y1="60" x2="22" y2="60" stroke="#ffc428" strokeWidth="3" strokeLinecap="round"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+            <div className="mb-2 text-sm font-bold text-[#ffc428]">KROK 4</div>
+            <h3 className="text-lg md:text-xl font-bold mb-2 text-[#215387]">Ruszaj w drogę</h3>
+            <p className="text-gray-600 text-xs md:text-sm leading-relaxed hidden md:block">
+              Ciesz się bezpieczną podróżą.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* 1. Dlaczego wayoo? */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-8">

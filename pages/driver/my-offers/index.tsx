@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { offers, getCarrierByUserId, getRequestById, getVehicleById } from '@/lib/data';
 
 export default function DriverMyOffersPage() {
   const { currentUser } = useAuth();
   const carrier = currentUser ? getCarrierByUserId(currentUser.id) : null;
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
   // Filter offers for current carrier
   const myOffers = carrier ? offers.filter((o) => o.carrierId === carrier.id) : [];
@@ -49,9 +51,12 @@ export default function DriverMyOffersPage() {
   };
 
   // Group offers by status
+  const activeOffers = myOffers.filter((o) => o.status === 'pending' || o.status === 'accepted');
+  const completedOffers = myOffers.filter((o) => o.status === 'rejected' || o.status === 'expired');
   const pendingOffers = myOffers.filter((o) => o.status === 'pending');
   const acceptedOffers = myOffers.filter((o) => o.status === 'accepted');
-  const otherOffers = myOffers.filter((o) => o.status !== 'pending' && o.status !== 'accepted');
+
+  const displayedOffers = activeTab === 'active' ? activeOffers : completedOffers;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -82,6 +87,34 @@ export default function DriverMyOffersPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <div className="flex gap-8">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`pb-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'active'
+                  ? 'border-[#215387] text-[#215387]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Aktywne oferty ({activeOffers.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`pb-4 px-1 border-b-2 font-medium transition-colors ${
+                activeTab === 'completed'
+                  ? 'border-[#215387] text-[#215387]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Zakończone ({completedOffers.length})
+            </button>
+          </div>
+        </div>
+      </div>
+
       {myOffers.length === 0 ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <div className="text-6xl mb-4">📝</div>
@@ -94,9 +127,23 @@ export default function DriverMyOffersPage() {
             Przeglądaj zapytania
           </Link>
         </div>
+      ) : displayedOffers.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-md p-12 text-center">
+          <div className="text-6xl mb-4">
+            {activeTab === 'active' ? '📝' : '📋'}
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            {activeTab === 'active' ? 'Brak aktywnych ofert' : 'Brak zakończonych ofert'}
+          </h2>
+          <p className="text-gray-600">
+            {activeTab === 'active'
+              ? 'Nie masz obecnie aktywnych ofert'
+              : 'Brak historii zakończonych ofert'}
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {myOffers
+          {displayedOffers
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .map((offer) => {
               const request = getRequestById(offer.requestId);

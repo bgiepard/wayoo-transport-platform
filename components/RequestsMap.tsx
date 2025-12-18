@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -72,9 +72,24 @@ interface RequestLocation {
 interface RequestsMapProps {
   requests: RequestLocation[];
   selectedRequestId?: string | null;
+  centerPoint?: { lat: number; lng: number } | null;
+  radius?: number;
+  onCenterPointChange?: (point: { lat: number; lng: number } | null) => void;
 }
 
-export default function RequestsMap({ requests, selectedRequestId }: RequestsMapProps) {
+// Component to handle map clicks
+function MapClickHandler({ onCenterPointChange }: { onCenterPointChange?: (point: { lat: number; lng: number }) => void }) {
+  useMapEvents({
+    click: (e) => {
+      if (onCenterPointChange) {
+        onCenterPointChange({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    },
+  });
+  return null;
+}
+
+export default function RequestsMap({ requests, selectedRequestId, centerPoint, radius = 50, onCenterPointChange }: RequestsMapProps) {
   const [mounted, setMounted] = useState(false);
   const apiKey = '11da404667ca45a78db6a73c3b6be0d9';
   const [routePaths, setRoutePaths] = useState<{ [key: string]: [number, number][] }>({});
@@ -157,6 +172,35 @@ export default function RequestsMap({ requests, selectedRequestId }: RequestsMap
           attribution='&copy; <a href="https://www.geoapify.com/">Geoapify</a>'
           url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${apiKey}`}
         />
+
+        {/* Map click handler */}
+        <MapClickHandler onCenterPointChange={onCenterPointChange} />
+
+        {/* Geographic filter circle */}
+        {centerPoint && (
+          <>
+            <Circle
+              center={[centerPoint.lat, centerPoint.lng]}
+              radius={radius * 1000} // Convert km to meters
+              pathOptions={{
+                color: '#ffc428',
+                fillColor: '#ffc428',
+                fillOpacity: 0.15,
+                weight: 2,
+              }}
+            />
+            <Marker position={[centerPoint.lat, centerPoint.lng]}>
+              <Popup>
+                <div className="text-sm">
+                  <div className="font-bold text-[#215387] mb-1">Punkt filtrowania</div>
+                  <div className="text-xs text-gray-600">
+                    Promień: {radius} km
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          </>
+        )}
 
         {requests.map((request, index) => {
           // Skip if no coordinates available

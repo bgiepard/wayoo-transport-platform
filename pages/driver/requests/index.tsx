@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { transportRequests, getOffersByRequestId, offers } from '@/lib/data';
 import { useAuth } from '@/lib/auth-context';
 import { getCarrierByUserId } from '@/lib/data';
@@ -21,13 +21,47 @@ export default function DriverRequestsPage() {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<string>('newest');
   const [filterCity, setFilterCity] = useState<string>('');
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(true);
 
   // Advanced filters
   const [minDistance, setMinDistance] = useState<number>(0);
   const [maxDistance, setMaxDistance] = useState<number>(1000);
   const [minBudget, setMinBudget] = useState<number>(0);
   const [maxBudget, setMaxBudget] = useState<number>(10000);
+
+  // Geographic filter - load from localStorage
+  const [centerPoint, setCenterPoint] = useState<{ lat: number; lng: number } | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('geoFilterCenter');
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+  const [radius, setRadius] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('geoFilterRadius');
+      return saved ? Number(saved) : 50;
+    }
+    return 50;
+  });
+  const [showGeoDropdown, setShowGeoDropdown] = useState(false);
+
+  // Save geographic filter to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (centerPoint) {
+        localStorage.setItem('geoFilterCenter', JSON.stringify(centerPoint));
+      } else {
+        localStorage.removeItem('geoFilterCenter');
+      }
+    }
+  }, [centerPoint]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('geoFilterRadius', String(radius));
+    }
+  }, [radius]);
 
   // Get only active requests
   let activeRequests = transportRequests.filter((r) =>
@@ -60,6 +94,20 @@ export default function DriverRequestsPage() {
     if (!r.budget?.max) return true;
     return r.budget.max >= minBudget && r.budget.max <= maxBudget;
   });
+
+  // Apply geographic filter (filter by distance from center point)
+  if (centerPoint) {
+    activeRequests = activeRequests.filter((r) => {
+      if (!r.from.coordinates) return false;
+      const distanceFromCenter = calculateDistance(
+        centerPoint.lat,
+        centerPoint.lng,
+        r.from.coordinates.lat,
+        r.from.coordinates.lng
+      );
+      return distanceFromCenter <= radius;
+    });
+  }
 
   // Apply sorting
   activeRequests = [...activeRequests].sort((a, b) => {
@@ -131,7 +179,7 @@ export default function DriverRequestsPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-[1400px] flex flex-col">
       <div className="px-4 py-6 border-b bg-white">
         <div className="max-w-[1800px] mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-1">Dostępne Zapytania</h1>
@@ -156,8 +204,134 @@ export default function DriverRequestsPage() {
                 />
               </div>
 
+              {/* Geographic filter dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowGeoDropdown(!showGeoDropdown)}
+                  className={`flex items-center gap-2 px-4 py-2 border-2 rounded-lg transition-all ${
+                    centerPoint
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="text-lg">📍</span>
+                  {centerPoint ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm font-medium text-gray-700">{radius} km</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium text-gray-600">Filtr obszaru</span>
+                  )}
+                  <svg
+                    className={`w-4 h-4 transition-transform ${showGeoDropdown ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {/* Dropdown panel with mini map */}
+                {showGeoDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border-2 border-gray-200 z-[1000]">
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-bold text-gray-900">Wybierz obszar na mapie</h3>
+                        <button
+                          onClick={() => setShowGeoDropdown(false)}
+                          className="text-gray-400 hover:text-gray-600"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* Mini map */}
+                      <div className="h-64 rounded-lg overflow-hidden border-2 border-gray-200 mb-3">
+                        <RequestsMap
+                          requests={[]}
+                          centerPoint={centerPoint}
+                          radius={radius}
+                          onCenterPointChange={setCenterPoint}
+                        />
+                      </div>
+
+                      {/* Radius selector */}
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-gray-700 mb-2">
+                          Promień: {radius} km
+                        </label>
+                        <div className="flex gap-2 mb-2">
+                          <button
+                            onClick={() => setRadius(30)}
+                            className={`flex-1 px-3 py-2 text-sm font-medium rounded transition-colors ${
+                              radius === 30
+                                ? 'bg-[#ffc428] text-[#215387]'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            30 km
+                          </button>
+                          <button
+                            onClick={() => setRadius(50)}
+                            className={`flex-1 px-3 py-2 text-sm font-medium rounded transition-colors ${
+                              radius === 50
+                                ? 'bg-[#ffc428] text-[#215387]'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            50 km
+                          </button>
+                          <button
+                            onClick={() => setRadius(100)}
+                            className={`flex-1 px-3 py-2 text-sm font-medium rounded transition-colors ${
+                              radius === 100
+                                ? 'bg-[#ffc428] text-[#215387]'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            100 km
+                          </button>
+                        </div>
+                        <input
+                          type="range"
+                          min="10"
+                          max="200"
+                          step="10"
+                          value={radius}
+                          onChange={(e) => setRadius(Number(e.target.value))}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#ffc428]"
+                        />
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        {centerPoint && (
+                          <button
+                            onClick={() => {
+                              setCenterPoint(null);
+                              setShowGeoDropdown(false);
+                            }}
+                            className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+                          >
+                            Usuń filtr
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowGeoDropdown(false)}
+                          className="flex-1 px-4 py-2 bg-[#215387] text-white rounded-lg hover:bg-[#1a4469] transition-colors text-sm font-medium"
+                        >
+                          Zastosuj
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {/* Sort by */}
-              <div className="w-64">
+              <div className="w-48">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -181,7 +355,7 @@ export default function DriverRequestsPage() {
                     : 'border-gray-300 hover:bg-gray-50'
                 }`}
               >
-                {showAdvancedFilters ? '▲ Ukryj filtry' : '▼ Więcej filtrów'}
+                {showAdvancedFilters ? '▲ Ukryj' : '▼ Więcej'}
               </button>
 
               {/* Reset filters */}
@@ -193,6 +367,8 @@ export default function DriverRequestsPage() {
                   setMaxDistance(1000);
                   setMinBudget(0);
                   setMaxBudget(10000);
+                  setCenterPoint(null);
+                  setRadius(50);
                 }}
                 className="px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium whitespace-nowrap"
               >
@@ -292,7 +468,7 @@ export default function DriverRequestsPage() {
           </div>
 
           {/* Two columns - List and Map */}
-          <div className="h-[calc(100vh-240px)] flex gap-6">
+          <div className="h-[calc(100vh-240px)] flex gap-6 pb-6">
             {/* Left column - Requests list */}
             <div className="flex-1 flex flex-col min-w-0">
 
@@ -489,8 +665,14 @@ export default function DriverRequestsPage() {
             </div>
 
             {/* Right column - Map */}
-            <div className="flex-1">
-              <RequestsMap requests={activeRequests} selectedRequestId={selectedRequestId} />
+            <div className="flex-1 pb-12">
+              <RequestsMap
+                requests={activeRequests}
+                selectedRequestId={selectedRequestId}
+                centerPoint={centerPoint}
+                radius={radius}
+                onCenterPointChange={setCenterPoint}
+              />
             </div>
           </div>
         </div>

@@ -26,7 +26,12 @@
       "WebFetch(domain:www.e-podroznik.pl)",
       "WebFetch(domain:www.wakacje.pl)",
       "Bash(npm run dev:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(cmd //c taskkill //PID 10348 //F)",
+      "Bash(cmd //c taskkill //PID 13632 //F)",
+      "Bash(if exist \".next\\\\dev\\\\lock\" del \".next\\\\dev\\\\lock\")"
     ],
     "deny": [],
     "ask": []

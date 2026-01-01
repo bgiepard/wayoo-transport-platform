@@ -35,21 +35,21 @@ export default function Navigation() {
       title: 'Partnerzy transportowi',
       links: [
         { label: 'Dołącz do Wayoo', href: '/dolacz-do-wayoo' },
-        { label: 'Wymagania współpracy', href: '/wymagania-wspolpracy' },
+        { label: 'Zasady współpracy', href: '/zasady-wspolpracy' },
         { label: 'Korzyści partnerskie', href: '/korzysci-partnerskie' },
         { label: 'Nasi partnerzy', href: '/nasi-partnerzy-transport' },
       ],
     },
-    {
-      title: 'Zrównoważony rozwój i ESG',
-      links: [
-        { label: 'Strategia ESG', href: '/strategia-esg' },
-        { label: 'Zrównoważona mobilność', href: '/zrownowazona-mobilnosc' },
-        { label: 'Inicjatywy środowiskowe', href: '/inicjatywy-srodowiskowe' },
-        { label: 'Standardy ESG dla partnerów', href: '/standardy-esg' },
-        { label: 'Raport ESG', href: '/raport-esg' },
-      ],
-    },
+    // {
+    //   title: 'Zrównoważony rozwój i ESG',
+    //   links: [
+    //     { label: 'Strategia ESG', href: '/strategia-esg' },
+    //     { label: 'Zrównoważona mobilność', href: '/zrownowazona-mobilnosc' },
+    //     { label: 'Inicjatywy środowiskowe', href: '/inicjatywy-srodowiskowe' },
+    //     { label: 'Standardy ESG dla partnerów', href: '/standardy-esg' },
+    //     { label: 'Raport ESG', href: '/raport-esg' },
+    //   ],
+    // },
     {
       title: 'O nas',
       links: [

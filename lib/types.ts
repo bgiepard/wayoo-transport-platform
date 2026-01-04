@@ -31,17 +31,27 @@ export interface TransportRequest {
   status: RequestStatus;
   from: Location;
   to: Location;
+  stops?: string[];
   departureDate: Date;
   returnDate?: Date;
   isRoundTrip: boolean;
   passengerCount: number;
   luggageInfo?: string;
   specialRequirements?: string;
+  additionalDescription?: string;
   budget?: {
     min?: number;
     max?: number;
     currency: string;
   };
+  // Amenities
+  hasWifi?: boolean;
+  hasAirConditioning?: boolean;
+  hasChildSeat?: boolean;
+  hasMoreSpace?: boolean;
+  moreSpaceDescription?: string;
+  numberOfChildren?: number;
+  childrenAges?: number[];
   viewCount: number;
   offerCount: number;
   createdAt: Date;

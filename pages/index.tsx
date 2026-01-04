@@ -338,8 +338,9 @@ export default function Home() {
     <div className="min-h-screen">
         <div
         className="relative min-h-[400px] pb-[50px] bg-cover bg-center bg-no-repeat bg-[#081c83]"
+        style={{ backgroundImage: 'url(/image005.png)' }}
       >
-        <div className="absolute inset-0 bg-[#081c83]/10"></div>
+        <div className="absolute inset-0 bg-[#081c83]/20"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-4">
           <div className="text-center space-y-8">

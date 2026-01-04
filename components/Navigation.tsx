@@ -297,7 +297,7 @@ export default function Navigation() {
     {/* Dropdown Menu */}
     <div className="bg-[#081c83]/95 border-b border-white/10 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-center space-x-8 py-3">
+        <div className="flex justify-between space-x-8 py-3">
           {menuItems.map((menu, index) => (
             <div
               key={index}

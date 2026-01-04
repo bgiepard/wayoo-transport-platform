@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import PlaceAutocomplete from './PlaceAutocomplete';
 
 export interface FormData {
   fromCity: string;
@@ -42,8 +41,8 @@ export default function SearchForm({
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="mt-12 px-4 relative" style={{ maxWidth: '1100px' }}>
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 relative" style={{ zIndex: 1 }}>
+    <div className="mt-12 px-4 relative">
+      <form onSubmit={handleSubmit} className="bg-white rounded-sm shadow-lg p-4 relative" style={{ zIndex: 1 }}>
         {/* 5 Kolumn */}
         <div className="grid grid-cols-1 gap-4 items-end" style={{ gridTemplateColumns: '2fr 1fr 0.6fr 0.8fr 0.8fr' }}>
           {/* Kolumna 1 - Trasa */}
@@ -188,32 +187,134 @@ export default function SearchForm({
                   </label>
 
                   {/* Fotelik */}
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={formData.hasChildSeat}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, hasChildSeat: e.target.checked }))}
-                      className="w-4 h-4 rounded border-2 border-gray-300 text-[#ffc428] focus:ring-2 focus:ring-[#ffc428]"
-                    />
-                    <svg className="w-4 h-4 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span className="text-xs font-medium text-gray-700">Fotelik</span>
-                  </label>
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.hasChildSeat}
+                        onChange={(e) => setFormData((prev) => ({
+                          ...prev,
+                          hasChildSeat: e.target.checked,
+                          numberOfChildren: e.target.checked ? prev.numberOfChildren : 1,
+                          childrenAges: e.target.checked ? prev.childrenAges : []
+                        }))}
+                        className="w-4 h-4 rounded border-2 border-gray-300 text-[#ffc428] focus:ring-2 focus:ring-[#ffc428]"
+                      />
+                      <svg className="w-4 h-4 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span className="text-xs font-medium text-gray-700">Fotelik</span>
+                    </label>
+
+                    {/* Rozwijane pola dla fotelika */}
+                    {formData.hasChildSeat && (
+                      <div className="mt-2 ml-6 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <label className="block text-xs font-semibold text-[#215387] mb-2">
+                          Liczba dzieci
+                        </label>
+                        <div className="flex items-center gap-3 mb-3">
+                          {/* Przycisk minus */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCount = Math.max(1, formData.numberOfChildren - 1);
+                              const newAges = formData.childrenAges.slice(0, newCount);
+                              setFormData((prev) => ({
+                                ...prev,
+                                numberOfChildren: newCount,
+                                childrenAges: newAges
+                              }));
+                            }}
+                            className="w-7 h-7 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-all flex items-center justify-center font-bold text-[#215387]"
+                          >
+                            -
+                          </button>
+
+                          {/* Wyświetlanie liczby */}
+                          <span className="w-8 text-center font-bold text-[#215387]">
+                            {formData.numberOfChildren}
+                          </span>
+
+                          {/* Przycisk plus */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newCount = Math.min(10, formData.numberOfChildren + 1);
+                              setFormData((prev) => ({
+                                ...prev,
+                                numberOfChildren: newCount
+                              }));
+                            }}
+                            className="w-7 h-7 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-100 transition-all flex items-center justify-center font-bold text-[#215387]"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {/* Pola wiekowe dla każdego dziecka */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-semibold text-[#215387] mb-1">
+                            Wiek dzieci (w latach)
+                          </label>
+                          {Array.from({ length: formData.numberOfChildren }).map((_, index) => (
+                            <input
+                              key={index}
+                              type="number"
+                              min="0"
+                              max="17"
+                              value={formData.childrenAges[index] || ''}
+                              onChange={(e) => {
+                                const newAges = [...formData.childrenAges];
+                                newAges[index] = parseInt(e.target.value) || 0;
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  childrenAges: newAges
+                                }));
+                              }}
+                              placeholder={`Dziecko ${index + 1}`}
+                              className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-[#ffc428] focus:border-[#ffc428]"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Więcej miejsca */}
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={formData.hasMoreSpace}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, hasMoreSpace: e.target.checked }))}
-                      className="w-4 h-4 rounded border-2 border-gray-300 text-[#ffc428] focus:ring-2 focus:ring-[#ffc428]"
-                    />
-                    <svg className="w-4 h-4 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                    <span className="text-xs font-medium text-gray-700">Więcej miejsca</span>
-                  </label>
+                  <div>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={formData.hasMoreSpace}
+                        onChange={(e) => setFormData((prev) => ({
+                          ...prev,
+                          hasMoreSpace: e.target.checked,
+                          moreSpaceDescription: e.target.checked ? prev.moreSpaceDescription : ''
+                        }))}
+                        className="w-4 h-4 rounded border-2 border-gray-300 text-[#ffc428] focus:ring-2 focus:ring-[#ffc428]"
+                      />
+                      <svg className="w-4 h-4 text-[#215387]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                      </svg>
+                      <span className="text-xs font-medium text-gray-700">Więcej miejsca</span>
+                    </label>
+
+                    {/* Pole opisu dla więcej miejsca */}
+                    {formData.hasMoreSpace && (
+                      <div className="mt-2 ml-6">
+                        <textarea
+                          value={formData.moreSpaceDescription}
+                          onChange={(e) => setFormData((prev) => ({
+                            ...prev,
+                            moreSpaceDescription: e.target.value
+                          }))}
+                          placeholder="Opisz swoje potrzeby, np. ilość bagażu, sprzęt sportowy..."
+                          rows={3}
+                          className="w-full px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-[#ffc428] focus:border-[#ffc428] resize-none"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Przycisk Zamknij */}
                   <button

@@ -1,14 +1,10 @@
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { useAuth } from '@/lib/auth-context';
+import {useEffect, useRef, useState} from 'react';
+import {useRouter} from 'next/router';
 import PlaceAutocomplete from '@/components/PlaceAutocomplete';
 import SearchForm from '@/components/SearchForm';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 
-// Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
   { ssr: false }
@@ -38,7 +34,6 @@ if (typeof window !== 'undefined') {
 }
 
 export default function Home() {
-  const { isPassenger, isCarrier } = useAuth();
   const router = useRouter();
   const [showDateTimePicker, setShowDateTimePicker] = useState(false);
   const dateTimePickerRef = useRef<HTMLDivElement>(null);
@@ -57,9 +52,7 @@ export default function Home() {
   // Helper function to extract city name from full address
   const extractCityName = (address: string): string => {
     if (!address) return '';
-    // Get the first part before comma (usually the city name)
-    const cityName = address.split(',')[0].trim();
-    return cityName;
+    return address.split(',')[0].trim();
   };
 
   // Add a new stop
@@ -101,12 +94,7 @@ export default function Home() {
     return parts.join(' → ');
   };
 
-  // Check if all stops are filled
-  const areAllStopsFilled = (): boolean => {
-    return formData.stops.every((stop) => stop !== '');
-  };
 
-  // Ustaw domyślną datę na jutro i godzinę na 12:00
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const defaultDate = tomorrow.toISOString().split('T')[0];
@@ -132,7 +120,6 @@ export default function Home() {
     childrenAges: [] as number[], // Wiek dzieci
   });
 
-  const [showAdditionalOptions, setShowAdditionalOptions] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -351,16 +338,11 @@ export default function Home() {
     <div className="min-h-screen">
         <div
         className="relative min-h-[400px] pb-[50px] bg-cover bg-center bg-no-repeat bg-[#081c83]"
-        style={{
-          backgroundImage: 'url(/bg_3.png)',
-          backgroundSize: '35%',
-          backgroundPosition: '100% -150px',
-        }}
       >
         <div className="absolute inset-0 bg-[#081c83]/10"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-4">
-          <div className="text-center space-y-8 max-w-[1100px]">
+          <div className="text-center space-y-8">
             <div className="space-y-4">
               <h1 className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg leading-tight">
                 Twój transport grupowy<br />

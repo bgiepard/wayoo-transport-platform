@@ -31,7 +31,8 @@
       "Bash(findstr:*)",
       "Bash(cmd //c taskkill //PID 10348 //F)",
       "Bash(cmd //c taskkill //PID 13632 //F)",
-      "Bash(if exist \".next\\\\dev\\\\lock\" del \".next\\\\dev\\\\lock\")"
+      "Bash(if exist \".next\\\\dev\\\\lock\" del \".next\\\\dev\\\\lock\")",
+      "Bash(tasklist:*)"
     ],
     "deny": [],
     "ask": []

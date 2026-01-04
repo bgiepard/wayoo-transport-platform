@@ -8,6 +8,7 @@ export default function PassengerRequestsPage() {
   const { currentUser } = useAuth();
   const [allRequests, setAllRequests] = useState(transportRequests);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
 
   // Update current time every minute for countdown
   useEffect(() => {
@@ -132,21 +133,41 @@ export default function PassengerRequestsPage() {
         title: 'Zlecenie zostało złożone',
         description: 'Twoje zapytanie zostało pomyślnie utworzone',
         status: 'completed' as const,
-        icon: '✓',
+        icon: (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        ),
       },
       {
         id: 2,
-        title: 'Nasi przewoźnicy dostali informację',
+        title: 'Przewoźnicy dostali informację',
         description: 'Twoje zapytanie jest widoczne dla przewoźników',
         status: request.status === 'active' ? 'active' as const : 'completed' as const,
-        icon: request.status === 'active' ? '⏳' : '✓',
+        icon: request.status === 'active' ? (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+        ) : (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        ),
       },
       {
         id: 3,
         title: 'Sprawdź oferty przewoźników',
         description: `${pendingOffers.length > 0 ? `Otrzymano ${pendingOffers.length} ${pendingOffers.length === 1 ? 'ofertę' : 'oferty'}` : 'Oczekiwanie na oferty'}`,
         status: pendingOffers.length > 0 ? 'active' as const : 'pending' as const,
-        icon: pendingOffers.length > 0 ? '⏳' : '○',
+        icon: pendingOffers.length > 0 ? (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        ) : (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
       },
       {
         id: 4,
@@ -155,7 +176,15 @@ export default function PassengerRequestsPage() {
           ? 'Oferta zaakceptowana!'
           : 'Wybierz najlepszą ofertę',
         status: request.status === 'booked' || request.status === 'completed' ? 'completed' as const : 'pending' as const,
-        icon: request.status === 'booked' || request.status === 'completed' ? '✓' : '○',
+        icon: request.status === 'booked' || request.status === 'completed' ? (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
       },
     ];
   };
@@ -164,6 +193,19 @@ export default function PassengerRequestsPage() {
   const latestRequest = myRequests.length > 0 ? myRequests[0] : null;
   const latestOffers = latestRequest ? getOffersByRequestId(latestRequest.id) : [];
   const progressSteps = latestRequest ? getProgressSteps(latestRequest, latestOffers) : [];
+
+  // Filter requests based on active tab (excluding the first one which is shown in progress section)
+  const filteredRequests = myRequests.slice(1).filter((request) => {
+    const timeRemaining = getTimeRemaining(request.createdAt);
+    const isExpired = timeRemaining.expired;
+    const isCompleted = request.status === 'completed' || request.status === 'cancelled' || request.status === 'booked' || isExpired;
+
+    if (activeTab === 'active') {
+      return !isCompleted;
+    } else {
+      return isCompleted;
+    }
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -185,7 +227,45 @@ export default function PassengerRequestsPage() {
       {latestRequest && (
         <div className="mb-12">
           <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] rounded-t-2xl px-6 py-4">
-            <h2 className="text-2xl font-bold text-white">Twoje ostatnie zapytanie</h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-white">
+                  {latestRequest.from.city} → {latestRequest.to.city}
+                </h2>
+                {(() => {
+                  const distance = calculateDistance(latestRequest.from, latestRequest.to);
+                  if (distance) {
+                    return (
+                      <span className="bg-[#ffc428] text-[#215387] px-3 py-1 rounded-full text-sm font-bold">
+                        {distance} km
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+              <div className="text-right">
+                <div className="text-white/80 text-sm mb-1">
+                  Utworzono: {formatDate(latestRequest.createdAt)}
+                </div>
+                {(() => {
+                  const timeRemaining = getTimeRemaining(latestRequest.createdAt);
+                  if (timeRemaining.expired) {
+                    return (
+                      <div className="text-red-300 text-sm font-semibold">
+                        Wygasło
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="text-[#ffc428] text-sm font-semibold">
+                        Wygasa za: {timeRemaining.hours}h {timeRemaining.minutes}m
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            </div>
           </div>
 
           <div className="bg-white rounded-b-2xl shadow-xl border-2 border-[#ffc428] p-8">
@@ -227,21 +307,25 @@ export default function PassengerRequestsPage() {
 
             {/* Progress Steps - Horizontal */}
             <div className="relative">
-              {/* Horizontal Progress Line */}
-              <div className="absolute top-8 left-0 right-0 flex items-center px-8">
-                <div className="flex-1 flex items-center gap-4">
+              {/* Connecting Lines - positioned absolutely */}
+              <div className="absolute top-8 left-0 right-0 px-8">
+                <div className="grid grid-cols-4 gap-4">
                   {progressSteps.map((step, index) => (
-                    <React.Fragment key={`line-${step.id}`}>
-                      {index > 0 && (
+                    <div key={`line-container-${step.id}`} className="relative flex justify-center">
+                      {index < progressSteps.length - 1 && (
                         <div
-                          className={`flex-1 h-1 ${
-                            progressSteps[index - 1].status === 'completed'
+                          className={`absolute left-1/2 top-0 h-1 ${
+                            step.status === 'completed'
                               ? 'bg-green-500'
                               : 'bg-gray-300'
                           }`}
+                          style={{
+                            width: 'calc(100% + 1rem)',
+                            marginLeft: '8px'
+                          }}
                         />
                       )}
-                    </React.Fragment>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -256,7 +340,7 @@ export default function PassengerRequestsPage() {
                         step.status === 'completed'
                           ? 'bg-green-500 border-green-500 text-white'
                           : step.status === 'active'
-                          ? 'bg-[#ffc428] border-[#ffc428] text-[#215387] animate-pulse'
+                          ? 'bg-[#ffc428] border-[#ffc428] text-[#215387]'
                           : 'bg-gray-100 border-gray-300 text-gray-400'
                       }`}
                     >
@@ -265,7 +349,7 @@ export default function PassengerRequestsPage() {
 
                     {/* Step Content */}
                     <div
-                      className={`w-full p-4 rounded-lg transition-all text-center ${
+                      className={`w-full p-4 rounded-lg transition-all text-center min-h-[100px] flex flex-col ${
                         step.status === 'active'
                           ? 'bg-yellow-50 border-2 border-[#ffc428]'
                           : step.status === 'completed'
@@ -306,15 +390,81 @@ export default function PassengerRequestsPage() {
               </div>
             </div>
           </div>
+
+          {/* Info Text */}
+          <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-blue-800">
+              <span className="font-semibold">Informacja:</span> Średni czas ofert przewoźników na podobne zlecenia to <span className="font-bold">11 minut</span>
+            </p>
+          </div>
         </div>
       )}
 
       {/* All Requests List */}
-      <div>
-        {myRequests.length > 1 && (
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Wszystkie zapytania</h2>
-        )}
-      </div>
+      {myRequests.length > 1 && (
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Wszystkie zapytania</h2>
+
+          {/* Tabs */}
+          <div className="flex gap-2 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`px-6 py-3 font-semibold transition-all relative ${
+                activeTab === 'active'
+                  ? 'text-[#215387] border-b-2 border-[#ffc428]'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Aktywne
+              {myRequests.slice(1).filter((r) => {
+                const timeRemaining = getTimeRemaining(r.createdAt);
+                const isExpired = timeRemaining.expired;
+                const isCompleted = r.status === 'completed' || r.status === 'cancelled' || r.status === 'booked' || isExpired;
+                return !isCompleted;
+              }).length > 0 && (
+                <span className="ml-2 bg-[#ffc428] text-[#215387] px-2 py-0.5 rounded-full text-xs font-bold">
+                  {myRequests.slice(1).filter((r) => {
+                    const timeRemaining = getTimeRemaining(r.createdAt);
+                    const isExpired = timeRemaining.expired;
+                    const isCompleted = r.status === 'completed' || r.status === 'cancelled' || r.status === 'booked' || isExpired;
+                    return !isCompleted;
+                  }).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`px-6 py-3 font-semibold transition-all relative ${
+                activeTab === 'completed'
+                  ? 'text-[#215387] border-b-2 border-[#ffc428]'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Zakończone
+              {myRequests.slice(1).filter((r) => {
+                const timeRemaining = getTimeRemaining(r.createdAt);
+                const isExpired = timeRemaining.expired;
+                const isCompleted = r.status === 'completed' || r.status === 'cancelled' || r.status === 'booked' || isExpired;
+                return isCompleted;
+              }).length > 0 && (
+                <span className="ml-2 bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                  {myRequests.slice(1).filter((r) => {
+                    const timeRemaining = getTimeRemaining(r.createdAt);
+                    const isExpired = timeRemaining.expired;
+                    const isCompleted = r.status === 'completed' || r.status === 'cancelled' || r.status === 'booked' || isExpired;
+                    return isCompleted;
+                  }).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Requests List */}
       <div>
@@ -332,13 +482,28 @@ export default function PassengerRequestsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Show all requests except the first one (which is shown above in progress section) */}
-          {myRequests.slice(1).sort((a, b) => {
-            const offersA = getOffersByRequestId(a.id).length;
-            const offersB = getOffersByRequestId(b.id).length;
-            // Sortuj malejąco po liczbie ofert (więcej ofert = wyżej)
-            return offersB - offersA;
-          }).map((request) => {
+          {/* Show filtered requests (excluding the first one which is shown above in progress section) */}
+          {filteredRequests.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <div className="text-4xl mb-4">
+                {activeTab === 'active' ? '📋' : '✓'}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {activeTab === 'active' ? 'Brak aktywnych zapytań' : 'Brak zakończonych zapytań'}
+              </h3>
+              <p className="text-gray-600">
+                {activeTab === 'active'
+                  ? 'Wszystkie Twoje zapytania zostały zakończone'
+                  : 'Nie masz jeszcze zakończonych zapytań'}
+              </p>
+            </div>
+          ) : (
+            filteredRequests.sort((a, b) => {
+              const offersA = getOffersByRequestId(a.id).length;
+              const offersB = getOffersByRequestId(b.id).length;
+              // Sortuj malejąco po liczbie ofert (więcej ofert = wyżej)
+              return offersB - offersA;
+            }).map((request) => {
             const offers = getOffersByRequestId(request.id);
             const hasNewOffers = offers.filter(o => o.status === 'pending').length > 0;
             const timeRemaining = getTimeRemaining(request.createdAt);
@@ -515,7 +680,7 @@ export default function PassengerRequestsPage() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       )}
       </div>

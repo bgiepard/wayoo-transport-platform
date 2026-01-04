@@ -1,17 +1,35 @@
 import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
 import {
   getRequestById,
   getOffersByRequestId,
   getCarrierById,
   getVehicleById,
+  transportRequests,
 } from '@/lib/data';
 
 export default function RequestDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
   const requestId = id as string;
+  const [allRequests, setAllRequests] = useState(transportRequests);
 
-  const request = requestId ? getRequestById(requestId) : null;
+  // Load requests from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedRequests = JSON.parse(localStorage.getItem('transportRequests') || '[]');
+      const parsedRequests = savedRequests.map((req: any) => ({
+        ...req,
+        departureDate: new Date(req.departureDate),
+        returnDate: req.returnDate ? new Date(req.returnDate) : undefined,
+        createdAt: new Date(req.createdAt),
+        updatedAt: new Date(req.updatedAt),
+      }));
+      setAllRequests([...parsedRequests, ...transportRequests]);
+    }
+  }, []);
+
+  const request = requestId ? allRequests.find((r) => r.id === requestId) : null;
   const offers = requestId ? getOffersByRequestId(requestId) : [];
 
   if (!requestId || !request) {
@@ -108,15 +126,6 @@ export default function RequestDetailsPage() {
           <div className="mt-4 p-4 bg-blue-50 rounded-lg">
             <h3 className="font-semibold text-gray-700 mb-2">Wymagania specjalne</h3>
             <p className="text-gray-700">{request.specialRequirements}</p>
-          </div>
-        )}
-
-        {request.budget?.max && (
-          <div className="mt-4 p-4 bg-green-50 rounded-lg">
-            <h3 className="font-semibold text-gray-700 mb-2">Budżet</h3>
-            <p className="text-gray-700">
-              Maksymalnie: <span className="font-bold">{request.budget.max} {request.budget.currency}</span>
-            </p>
           </div>
         )}
       </div>

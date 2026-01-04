@@ -92,11 +92,13 @@ export default function PlaceAutocomplete({
   };
 
   const handleSelect = (placeName: string) => {
-    onChange(placeName);
+    // Remove "województwo" from the place name
+    const cleanedPlaceName = placeName.replace(/województwo\s*/gi, '').replace(/,\s*,/g, ',').trim();
+    onChange(cleanedPlaceName);
     setSuggestions([]);
     setShowDropdown(false);
     if (onSelect) {
-      onSelect(placeName);
+      onSelect(cleanedPlaceName);
     }
   };
 
@@ -124,7 +126,8 @@ export default function PlaceAutocomplete({
             // Extract main text and context (region, country)
             const mainText = suggestion.text;
             const contextText = suggestion.context
-              ?.map(c => c.text)
+              ?.map(c => c.text.replace(/województwo\s*/gi, ''))
+              .filter(text => text.trim() !== '')
               .join(', ') || '';
 
             return (

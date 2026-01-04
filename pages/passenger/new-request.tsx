@@ -16,7 +16,6 @@ export default function NewRequestPage() {
     passengerCount: 1,
     luggageInfo: '',
     specialRequirements: '',
-    budgetMax: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -233,27 +232,6 @@ export default function NewRequestPage() {
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Budget Section */}
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900">Budżet</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Maksymalny budżet (PLN)
-            </label>
-            <input
-              type="number"
-              name="budgetMax"
-              min="0"
-              step="100"
-              value={formData.budgetMax}
-              onChange={handleChange}
-              placeholder="np. 3000"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <p className="text-sm text-gray-500 mt-1">Opcjonalnie - pomoże przewoźnikom przygotować ofertę</p>
           </div>
         </div>
 

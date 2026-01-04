@@ -225,85 +225,89 @@ export default function PassengerRequestsPage() {
 
       {/* Latest Request Progress Section */}
       {latestRequest && (
-        <div className="mb-12">
-          <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] rounded-t-2xl px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-white">
-                  {latestRequest.from.city} → {latestRequest.to.city}
-                </h2>
-                {(() => {
-                  const distance = calculateDistance(latestRequest.from, latestRequest.to);
-                  if (distance) {
-                    return (
-                      <span className="bg-[#ffc428] text-[#215387] px-3 py-1 rounded-full text-sm font-bold">
-                        {distance} km
-                      </span>
-                    );
-                  }
-                  return null;
-                })()}
-              </div>
-              <div className="text-right">
-                <div className="text-white/80 text-sm mb-1">
-                  Utworzono: {formatDate(latestRequest.createdAt)}
-                </div>
-                {(() => {
-                  const timeRemaining = getTimeRemaining(latestRequest.createdAt);
-                  if (timeRemaining.expired) {
-                    return (
-                      <div className="text-red-300 text-sm font-semibold">
-                        Wygasło
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div className="text-[#ffc428] text-sm font-semibold">
-                        Wygasa za: {timeRemaining.hours}h {timeRemaining.minutes}m
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-b-2xl shadow-xl border-2 border-[#ffc428] p-8">
-            {/* Request Summary */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
+        <div className="mb-8">
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Compact Header */}
+            <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] px-6 py-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <h3 className="text-2xl font-bold text-gray-900">
-                    {latestRequest.from.city} → {latestRequest.to.city}
-                  </h3>
-                  {getStatusBadge(latestRequest.status)}
+                  <div>
+                    <h2 className="text-xl font-bold text-white mb-1">
+                      {latestRequest.from.city.replace('województwo', '')} → {latestRequest.to.city.replace('województwo', '')}
+                    </h2>
+                    <div className="flex items-center gap-3 text-white/80 text-sm">
+                      <span>{formatDate(latestRequest.departureDate).split(',')[0]}</span>
+                      <span>•</span>
+                      <span>{latestRequest.passengerCount} osób</span>
+                      {(() => {
+                        const distance = calculateDistance(latestRequest.from, latestRequest.to);
+                        if (distance) {
+                          return (
+                            <>
+                              <span>•</span>
+                              <span>{distance} km</span>
+                            </>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  </div>
                 </div>
-                <Link
-                  href={`/passenger/requests/${latestRequest.id}`}
-                  className="text-[#215387] hover:text-[#1a4469] font-semibold flex items-center gap-2"
-                >
-                  Szczegóły
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
 
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {formatDate(latestRequest.departureDate)}
-                </div>
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  {latestRequest.passengerCount} osób
+                <div className="flex items-center gap-3">
+                  {(() => {
+                    const timeRemaining = getTimeRemaining(latestRequest.createdAt);
+                    const colors = getTimeColor(timeRemaining.hours, timeRemaining.expired);
+
+                    return (
+                      <div className={`${colors.bg} px-4 py-2 rounded-lg border ${colors.border}`}>
+                        <div className="flex items-center gap-2">
+                          <svg className={`w-4 h-4 ${colors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className={`text-sm font-bold ${colors.text}`}>
+                            {timeRemaining.expired ? 'Wygasło' : `${timeRemaining.hours}h ${timeRemaining.minutes}m`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {getStatusBadge(latestRequest.status)}
+
+                  <Link
+                    href={`/passenger/requests/${latestRequest.id}`}
+                    className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg transition-all font-medium text-sm flex items-center gap-1.5 border border-white/30"
+                  >
+                    Szczegóły
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
                 </div>
               </div>
             </div>
+
+            {/* Compact Stats */}
+            <div className="p-5">
+              {/* Additional Options - Compact */}
+              {(latestRequest.hasWifi || latestRequest.hasAirConditioning || latestRequest.hasChildSeat || latestRequest.hasMoreSpace) && (
+                <div className="flex flex-wrap gap-2 pb-1">
+                  {latestRequest.hasWifi && (
+                    <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">WiFi</span>
+                  )}
+                  {latestRequest.hasAirConditioning && (
+                    <span className="bg-cyan-100 text-cyan-700 px-2 py-1 rounded text-xs font-medium">Klimatyzacja</span>
+                  )}
+                  {latestRequest.hasChildSeat && (
+                    <span className="bg-pink-100 text-pink-700 px-2 py-1 rounded text-xs font-medium">Fotelik</span>
+                  )}
+                  {latestRequest.hasMoreSpace && (
+                    <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-medium">Więcej miejsca</span>
+                  )}
+                </div>
+              )}
 
             {/* Progress Steps - Horizontal */}
             <div className="relative">
@@ -388,6 +392,7 @@ export default function PassengerRequestsPage() {
                   </div>
                 ))}
               </div>
+            </div>
             </div>
           </div>
 

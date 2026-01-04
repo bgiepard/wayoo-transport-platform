@@ -357,6 +357,17 @@ export default function Home() {
               handleChange={handleChange}
               setShowRouteModal={setShowRouteModal}
               getRouteDisplayText={getRouteDisplayText}
+              addStop={addStop}
+              removeStop={removeStop}
+              updateStop={updateStop}
+              geocodeCity={geocodeCity}
+              getRoute={getRoute}
+              updateRoute={updateRoute}
+              routeCoordinates={routeCoordinates}
+              routePath={routePath}
+              allWaypoints={allWaypoints}
+              isLoadingRoute={isLoadingRoute}
+              routeReady={routeReady}
             />
             {showRouteModal && (
               <div className="absolute left-0 right-0 top-0 z-50">

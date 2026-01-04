@@ -32,7 +32,9 @@
       "Bash(cmd //c taskkill //PID 10348 //F)",
       "Bash(cmd //c taskkill //PID 13632 //F)",
       "Bash(if exist \".next\\\\dev\\\\lock\" del \".next\\\\dev\\\\lock\")",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(cmd //c taskkill //PID 8136 //F)",
+      "Bash(cmd //c \"if exist .next\\\\dev\\\\lock del .next\\\\dev\\\\lock\")"
     ],
     "deny": [],
     "ask": []

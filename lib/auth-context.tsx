@@ -16,23 +16,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
-
-    // Automatyczne ustawienie użytkownika na podstawie ścieżki URL
-    const path = window.location.pathname;
-
-    if (path.startsWith('/driver')) {
-      // Panel przewoźnika - ustaw przewoźnika (Michał Wiśniewski - id: 3)
-      const carrier = users.find((u) => u.id === '3' && u.role === 'carrier');
-      setCurrentUser(carrier || null);
-    } else {
-      // Panel pasażera - ustaw pasażera (Jan Kowalski - id: 1)
-      const passenger = users.find((u) => u.id === '1' && u.role === 'passenger');
-      setCurrentUser(passenger || null);
-    }
-  }, []);
+  // Demo mode: user must login manually using LoginModal (login: test, password: test)
+  // Automatic login based on URL path is disabled
 
   const isPassenger = currentUser?.role === 'passenger';
   const isCarrier = currentUser?.role === 'carrier';

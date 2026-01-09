@@ -3,12 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { transportRequests, getOffersByRequestId } from '@/lib/data';
 import type { Location } from '@/lib/types';
+import { useRouter } from 'next/router';
+import LoginModal from '@/components/LoginModal';
+import ProfileCompletionModal from '@/components/ProfileCompletionModal';
+import WhyTrustUs from '@/components/WhyTrustUs';
 
 export default function PassengerRequestsPage() {
   const { currentUser } = useAuth();
+  const router = useRouter();
   const [allRequests, setAllRequests] = useState(transportRequests);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileCompletionModal, setShowProfileCompletionModal] = useState(false);
 
   // Update current time every minute for countdown
   useEffect(() => {
@@ -37,7 +44,13 @@ export default function PassengerRequestsPage() {
 
   // Filter requests for current user and sort by newest
   const myRequests = allRequests
-    .filter((r) => r.userId === currentUser?.id)
+    .filter((r) => {
+      if (!currentUser) {
+        // For non-logged users, show only guest requests
+        return r.userId === 'guest';
+      }
+      return r.userId === currentUser.id;
+    })
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   const formatDate = (date: Date) => {
@@ -126,6 +139,7 @@ export default function PassengerRequestsPage() {
   // Get progress steps for a request
   const getProgressSteps = (request: typeof myRequests[0], offers: any[]) => {
     const pendingOffers = offers.filter(o => o.status === 'pending');
+    const isGuest = !currentUser;
 
     return [
       {
@@ -141,10 +155,29 @@ export default function PassengerRequestsPage() {
       },
       {
         id: 2,
-        title: 'Przewoźnicy dostali informację',
-        description: 'Twoje zapytanie jest widoczne dla przewoźników',
-        status: request.status === 'active' ? 'active' as const : 'completed' as const,
-        icon: request.status === 'active' ? (
+        title: isGuest ? 'Zaloguj się aby zatwierdzić zamówienie' : 'Przewoźnicy dostali informację',
+        description: isGuest ? (
+          <div>
+            <p className="mb-2">Aby przewoźnicy otrzymali Twoje zapytanie, musisz się zalogować lub założyć konto</p>
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="bg-[#ffc428] hover:bg-[#ffb700] text-[#215387] font-bold px-6 py-2 rounded-lg transition-all shadow-md hover:shadow-lg"
+            >
+              Zaloguj się
+            </button>
+          </div>
+        ) : 'Twoje zapytanie jest widoczne dla przewoźników',
+        status: isGuest ? 'active' as const : (request.status === 'active' ? 'active' as const : 'completed' as const),
+        icon: isGuest ? (
+          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+        ) : request.status === 'active' ? (
           <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
@@ -194,6 +227,14 @@ export default function PassengerRequestsPage() {
   const latestOffers = latestRequest ? getOffersByRequestId(latestRequest.id) : [];
   const progressSteps = latestRequest ? getProgressSteps(latestRequest, latestOffers) : [];
 
+  // Similar trips for non-logged users
+  const similarTrips = [
+    { from: 'Warszawa', to: 'Kraków', distance: 294, passengers: 15, daysAgo: 3, carrier: 'TransBus', initials: 'TB', bgColor: 'bg-blue-500' },
+    { from: 'Gdańsk', to: 'Wrocław', distance: 458, passengers: 22, daysAgo: 5, carrier: 'PolandExpress', initials: 'PE', bgColor: 'bg-green-600' },
+    { from: 'Poznań', to: 'Zakopane', distance: 512, passengers: 18, daysAgo: 7, carrier: 'GóralTransport', initials: 'GT', bgColor: 'bg-orange-500' },
+    { from: 'Łódź', to: 'Sopot', distance: 386, passengers: 12, daysAgo: 2, carrier: 'FastBus Pro', initials: 'FB', bgColor: 'bg-purple-600' },
+  ];
+
   // Filter requests based on active tab (excluding the first one which is shown in progress section)
   const filteredRequests = myRequests.slice(1).filter((request) => {
     const timeRemaining = getTimeRemaining(request.createdAt);
@@ -210,22 +251,26 @@ export default function PassengerRequestsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Moje Zapytania</h1>
-          <p className="text-gray-600">Zarządzaj swoimi zapytaniami o transport</p>
+          <p className="text-gray-600">
+            {!currentUser ? 'Zaloguj się, aby zarządzać swoimi zapytaniami' : 'Zarządzaj swoimi zapytaniami o transport'}
+          </p>
         </div>
-        <Link
-          href="/passenger/new-request"
-          className="bg-[#ffc428] text-[#215387] px-6 py-3 rounded-lg hover:bg-[#f5b920] transition-colors font-semibold shadow-lg hover:shadow-xl"
-        >
-          + Nowe Zapytanie
-        </Link>
+        {currentUser && (
+          <Link
+            href="/passenger/new-request"
+            className="bg-[#ffc428] text-[#215387] px-6 py-3 rounded-lg hover:bg-[#f5b920] transition-colors font-semibold shadow-lg hover:shadow-xl"
+          >
+            + Nowe Zapytanie
+          </Link>
+        )}
       </div>
 
       {/* Latest Request Progress Section */}
       {latestRequest && (
-        <div className="mb-8">
+        <div className="mb-16">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
             {/* Compact Header */}
             <div className="bg-gradient-to-r from-[#215387] to-[#1a4469] px-6 py-4">
@@ -410,9 +455,85 @@ export default function PassengerRequestsPage() {
         </div>
       )}
 
-      {/* All Requests List */}
-      {myRequests.length > 1 && (
-        <div className="mb-6">
+      {/* Similar Trips and Why trust us section - shown for non-logged users */}
+      {!currentUser && (
+        <>
+          {/* Similar Trips Section */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Podobne przejazdy zrealizowane przez Wayoo</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {similarTrips.map((trip, index) => (
+                <div
+                  key={index}
+                  className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-[#ffc428] hover:shadow-lg transition-all"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-900">{trip.from}</span>
+                      </div>
+                      <div className="flex items-center justify-center my-1">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                        </svg>
+                        <span className="text-sm font-semibold text-gray-900">{trip.to}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`w-10 h-10 ${trip.bgColor} rounded-full flex items-center justify-center shadow-md`}>
+                        <span className="text-white font-bold text-sm">{trip.initials}</span>
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 text-center leading-tight">{trip.carrier}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                        Dystans
+                      </span>
+                      <span className="font-bold text-gray-900">{trip.distance} km</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Pasażerowie
+                      </span>
+                      <span className="font-bold text-gray-900">{trip.passengers} osób</span>
+                    </div>
+                    <div className="flex items-center justify-center pt-2">
+                      <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full">
+                        Zrealizowano {trip.daysAgo} {trip.daysAgo === 1 ? 'dzień' : 'dni'} temu
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Why trust us section */}
+          <WhyTrustUs />
+        </>
+      )}
+
+      {/* All Requests List - only shown for logged users */}
+      {currentUser && myRequests.length > 1 && (
+        <div className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Wszystkie zapytania</h2>
 
           {/* Tabs */}
@@ -689,6 +810,19 @@ export default function PassengerRequestsPage() {
         </div>
       )}
       </div>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onOpenProfileCompletion={() => setShowProfileCompletionModal(true)}
+      />
+
+      {/* Profile Completion Modal */}
+      <ProfileCompletionModal
+        isOpen={showProfileCompletionModal}
+        onClose={() => setShowProfileCompletionModal(false)}
+      />
     </div>
   );
 }

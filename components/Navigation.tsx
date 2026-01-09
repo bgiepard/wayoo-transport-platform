@@ -5,11 +5,15 @@ import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { transportRequests, offers } from '@/lib/data';
 import { useState, useRef, useEffect } from 'react';
+import LoginModal from './LoginModal';
+import ProfileCompletionModal from './ProfileCompletionModal';
 
 export default function Navigation() {
   const { currentUser } = useAuth();
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileCompletionModal, setShowProfileCompletionModal] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   const menuItems = [
@@ -152,93 +156,117 @@ export default function Navigation() {
 
           {/* Navigation Links */}
           <div className="flex items-center space-x-6">
-            {/* Notifications Icon with Dropdown */}
-            <div className="relative" ref={notificationsRef}>
-              <button
-                type="button"
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="text-white hover:text-[#ffc428] transition-colors relative inline-flex items-center"
-                title="Powiadomienia"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-                {newOffersCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#ffc428] text-[#215387] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                    {newOffersCount}
-                  </span>
-                )}
-              </button>
+            {currentUser ? (
+              <>
+                {/* Notifications Icon with Dropdown */}
+                <div className="relative" ref={notificationsRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="text-white hover:text-[#ffc428] transition-colors relative inline-flex items-center"
+                    title="Powiadomienia"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                      />
+                    </svg>
+                    {newOffersCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-[#ffc428] text-[#215387] text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                        {newOffersCount}
+                      </span>
+                    )}
+                  </button>
 
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-96 z-50">
-                  <div className="bg-white border border-gray-200 rounded-lg shadow-2xl py-2 max-h-[500px] overflow-y-auto">
-                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="font-bold text-gray-900">Powiadomienia</h3>
-                      {newOffersCount > 0 && (
-                        <span className="text-xs text-gray-500">
-                          {newOffersCount} {newOffersCount === 1 ? 'nowa' : 'nowych'}
-                        </span>
-                      )}
-                    </div>
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 top-full mt-2 w-96 z-50">
+                      <div className="bg-white border border-gray-200 rounded-lg shadow-2xl py-2 max-h-[500px] overflow-y-auto">
+                        <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                          <h3 className="font-bold text-gray-900">Powiadomienia</h3>
+                          {newOffersCount > 0 && (
+                            <span className="text-xs text-gray-500">
+                              {newOffersCount} {newOffersCount === 1 ? 'nowa' : 'nowych'}
+                            </span>
+                          )}
+                        </div>
 
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-8 text-center">
-                        <div className="text-4xl mb-2">🔔</div>
-                        <p className="text-gray-500 text-sm">Brak nowych powiadomień</p>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-100">
-                        {notifications.map(({ request, offersCount }) => (
-                          <Link
-                            key={request.id}
-                            href={`/passenger/requests/${request.id}`}
-                            onClick={() => setShowNotifications(false)}
-                            className="block px-4 py-3 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 w-10 h-10 bg-[#ffc428] rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-5 h-5 text-[#215387]"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                  />
-                                </svg>
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {offersCount} {offersCount === 1 ? 'nowa oferta' : 'nowe oferty'}
-                                  </span>
-                                </div>
-                                <p className="text-sm font-semibold text-gray-900 truncate">
-                                  {request.from.city} → {request.to.city}
-                                </p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  {formatDate(request.updatedAt)}
-                                </p>
-                              </div>
-
-                              <svg
-                                className="w-4 h-4 text-gray-400 flex-shrink-0"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                        {notifications.length === 0 ? (
+                          <div className="px-4 py-8 text-center">
+                            <div className="text-4xl mb-2">🔔</div>
+                            <p className="text-gray-500 text-sm">Brak nowych powiadomień</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-gray-100">
+                            {notifications.map(({ request, offersCount }) => (
+                              <Link
+                                key={request.id}
+                                href={`/passenger/requests/${request.id}`}
+                                onClick={() => setShowNotifications(false)}
+                                className="block px-4 py-3 hover:bg-gray-50 transition-colors"
                               >
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 w-10 h-10 bg-[#ffc428] rounded-full flex items-center justify-center">
+                                    <svg
+                                      className="w-5 h-5 text-[#215387]"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      />
+                                    </svg>
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {offersCount} {offersCount === 1 ? 'nowa oferta' : 'nowe oferty'}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm font-semibold text-gray-900 truncate">
+                                      {request.from.city} → {request.to.city}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {formatDate(request.updatedAt)}
+                                    </p>
+                                  </div>
+
+                                  <svg
+                                    className="w-4 h-4 text-gray-400 flex-shrink-0"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
+                                </div>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+
+                        {notifications.length > 0 && (
+                          <div className="px-4 py-3 border-t border-gray-200">
+                            <Link
+                              href="/passenger/requests"
+                              onClick={() => setShowNotifications(false)}
+                              className="text-sm text-[#215387] hover:text-[#1a4469] font-medium flex items-center justify-center gap-1"
+                            >
+                              Zobacz wszystkie zapytania
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -246,49 +274,38 @@ export default function Navigation() {
                                   d="M9 5l7 7-7 7"
                                 />
                               </svg>
-                            </div>
-                          </Link>
-                        ))}
+                            </Link>
+                          </div>
+                        )}
                       </div>
-                    )}
-
-                    {notifications.length > 0 && (
-                      <div className="px-4 py-3 border-t border-gray-200">
-                        <Link
-                          href="/passenger/requests"
-                          onClick={() => setShowNotifications(false)}
-                          className="text-sm text-[#215387] hover:text-[#1a4469] font-medium flex items-center justify-center gap-1"
-                        >
-                          Zobacz wszystkie zapytania
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <Link
-              href="/passenger/requests"
-              className="text-white hover:text-[#ffc428] font-medium transition-colors"
-            >
-              Moje Zapytania
-            </Link>
+                <Link
+                  href="/passenger/requests"
+                  className="text-white hover:text-[#ffc428] font-medium transition-colors"
+                >
+                  Moje Zapytania
+                </Link>
 
-            <Link
-              href="/passenger/account"
-              className="text-white hover:text-[#ffc428] font-medium transition-colors"
-            >
-              Moje Konto
-            </Link>
+                <Link
+                  href="/passenger/account"
+                  className="text-white hover:text-[#ffc428] font-medium transition-colors"
+                >
+                  Moje Konto
+                </Link>
+              </>
+            ) : (
+              /* Login Button when not logged in */
+              <button
+                type="button"
+                onClick={() => setShowLoginModal(true)}
+                className="bg-[#ffc428] hover:bg-[#ffb700] text-[#081c83] font-semibold px-6 py-2 rounded-lg transition-all shadow-md hover:shadow-lg"
+              >
+                Zaloguj się
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -344,6 +361,19 @@ export default function Navigation() {
         </div>
       </div>
     </div>
+
+    {/* Login Modal */}
+    <LoginModal
+      isOpen={showLoginModal}
+      onClose={() => setShowLoginModal(false)}
+      onOpenProfileCompletion={() => setShowProfileCompletionModal(true)}
+    />
+
+    {/* Profile Completion Modal */}
+    <ProfileCompletionModal
+      isOpen={showProfileCompletionModal}
+      onClose={() => setShowProfileCompletionModal(false)}
+    />
   </>
   );
 }

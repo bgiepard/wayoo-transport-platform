@@ -7,7 +7,7 @@ import VerificationCodeInput from '@/components/VerificationCodeInput';
 type TabType = 'profile' | 'password' | 'notifications';
 
 export default function PassengerAccountPage() {
-  const { currentUser } = useAuth();
+  const { currentUser, setCurrentUser } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
 
@@ -132,7 +132,7 @@ export default function PassengerAccountPage() {
 
   const handleLogout = () => {
     if (confirm('Czy na pewno chcesz się wylogować?')) {
-      alert('Wylogowano! (Demo)');
+      setCurrentUser(null);
       router.push('/');
     }
   };
